@@ -1,0 +1,9 @@
+mongoimport --db cofind_test --collection users --file test/testdata/user.data.json
+mongoimport --db cofind_test --collection groups --file test/testdata/group.data.json
+mongoimport --db cofind_test --collection members --file test/testdata/member.data.json
+mongoimport --db cofind_test --collection devices --file test/testdata/device.data.json
+mongoimport --db cofind_test --collection sessions --file test/testdata/session.data.json
+mongoimport --db cofind_test --collection websiteVisits --file test/testdata/websiteVisit.data.json
+mongoimport --db cofind_test --collection messages --file test/testdata/message.data.json
+mongoimport --db cofind_test --collection websiteProposals --file test/testdata/websiteProposal.data.json
+mongoimport --db cofind_test --collection notes --file test/testdata/note.data.json

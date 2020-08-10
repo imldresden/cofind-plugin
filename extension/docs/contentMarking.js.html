@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: contentMarking.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: contentMarking.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Author: Lucas Vogel
+ * 
+ * This file manages the display and marking of comments in every website.
+ */
+
+var globalUserID = "noIdSet";
+var globalUserName = "Awaiting Server Sync";
+var isTouchDevice = false;
+
+data = [];
+isTouchDevice = isThisATouchDevice();
+
+/**
+ * Main highlight function
+ * @param {String} source mandatory. There is a bug in firefox,
+ * that calls listeners sometimes randomly without a stacktrace.
+ * Until fixed, this needs to be here to prevent unwanted double
+ * execution of code
+ */
+async function GetSelectedText(source = "") {
+    if (source == "" || source == null || source == undefined) {
+        /*Fixes Firefox bug, when this function is called randomly, without comming from a Listener. */
+        return;
+    }
+    var range = window.getSelection();
+    removeAllHighlights();
+    reDrawAll();
+
+    var startElement = range.anchorNode;
+    var endElement = range.focusNode;
+    var all = textNodesUnder(document.body);
+    startElementTypeOffset = 0;
+    for (var i = 0, max = all.length; i &lt; max; i++) {/*Start Element */
+        element = all[i];
+        if (element === startElement) { //If it found a valid start element
+            break;
+        } else {
+            if (startElement == null) {
+                return;
+            }
+            if (element.nodeName === startElement.nodeName) {
+                startElementTypeOffset += 1;
+            }
+        }
+    }
+    endElementTypeOffset = 0;
+    for (var i = 0, max = all.length; i &lt; max; i++) { /*End Element */
+        element = all[i];
+        if (element === endElement) { //Found a valid end element
+            break;
+        } else {
+            if (endElement == null) {
+                return;
+            }
+            if (element.nodeName === endElement.nodeName) {
+                endElementTypeOffset += 1;
+            }
+        }
+    }
+    if (startElement.parentElement.nodeName == endElement.parentElement.nodeName
+        &amp;&amp; range.anchorOffset == range.focusOffset
+        &amp;&amp; startElement.nodeValue == endElement.nodeValue) {
+        /*When Selection is empty (empty click on document)*/
+        removeAllADDCommentBoxes();
+        return;
+    }
+    var commentID = uuidv4();
+
+    newElement = {
+        startElementOffsetOfSameType: startElementTypeOffset,
+        startElementType: startElement.parentElement.nodeName,
+        startElementInnerOffset: range.anchorOffset,
+        startElementInnerText: startElement.nodeValue,
+        endElementOffsetOfSameType: endElementTypeOffset,
+        endElementType: endElement.parentElement.nodeName,
+        endElementInnerOffset: range.focusOffset,
+        endElementInnerText: endElement.nodeValue,
+        userID: globalUserID,
+        userName: globalUserName,
+        commentID: commentID,
+        url: window.location.href
+    }
+    highlightBox = findAndHighlightText(startElementTypeOffset,
+        startElement.parentElement.nodeName,
+        range.anchorOffset,
+        startElement.nodeValue,
+        endElementTypeOffset,
+        endElement.parentElement.nodeName,
+        range.focusOffset,
+        endElement.nodeValue,
+        globalUserID,
+        globalUserName,
+        commentID
+    );
+    var getRange = range.getRangeAt(0);
+    var getRect = getRange.getBoundingClientRect();
+    var returnObject = await addCommentBox(getRect.top + window.scrollY, getRect.left, newElement);
+    if (returnObject.text !== "" &amp;&amp; returnObject.text !== false &amp;&amp; returnObject.text !== null &amp;&amp; returnObject.text !== undefined) {
+        var text = returnObject.text;
+        newElement = returnObject.data;
+        newElement["text"] = text;
+        removeAllADDCommentBoxes();
+        data.push(newElement);
+        if (highlightBox !== null &amp;&amp; highlightBox !== undefined) {
+            topPixel = highlightBox.top;
+            appendReadyCommentBox(newElement.userName, newElement.userID, text, newElement.commentID, topPixel, highlightBox.left)
+        }
+    } else { //If there is no valid comment
+        removeAllHighlights();
+        reDrawAll();
+    }
+}
+
+/**
+ * Listener on mouseup, for drawing the highlight box
+ */
+document.addEventListener("mouseup", function (event) {
+    if (event.target.hasAttribute("data-cofind-comment-id")
+        || event.target.classList[0] == "coFindAddComentBox"
+        || event.target.id == "coFindAddBoxAddButton"
+        || event.target.id == "coFindTextBox"
+        || event.target.hasAttribute("data-cofind-id")) {
+        return;
+    } else {
+        GetSelectedText("mouse");
+    }
+
+});
+
+/**
+ * Listener on touchend, to draw hightlight box for touch devices
+ */
+document.addEventListener("touchend", function (event) {
+    if (event.target.hasAttribute("data-cofind-comment-id")
+        || event.target.classList[0] == "coFindAddComentBox"
+        || event.target.id == "coFindAddBoxAddButton"
+        || event.target.id == "coFindTextBox"
+        || event.target.hasAttribute("data-cofind-id")) {
+        return;
+    } else {
+        GetSelectedText("touch");
+    }
+});
+
+document.addEventListener('selectionchange', (event) => {
+    if (isTouchDevice == false) {
+        return;
+    }
+    if (isTouchDevice == true) {
+        element = event.target.activeElement;
+        if (element !== undefined &amp;&amp; element !== null) {
+            if (element.hasAttribute("data-cofind-comment-id") == true
+                || element.classList[0] == "coFindAddComentBox"
+                || element.id == "coFindAddBoxAddButton"
+                || element.id == "coFindTextBox"
+                || element.nodeName == "INPUT") {
+                return;
+            }
+        }
+        GetSelectedText("selection");
+    }
+});
+/**
+ * Tries to find a node by the type and content. Backup if direct offset is not working
+ * @param {String} startElementType Type of the element
+ * @param {String} startElementInnerText Text of the element
+ * @returns element or false
+ */
+function fullSiteNodeSearch(startElementType, startElementInnerText) {
+    var allNodes = textNodesUnder(document.body);
+    var nodeWithSameTextCounter = 0;
+    var targetElement;
+    allNodes.forEach(element => {
+        //TODO: possible bug, needs a lot of computing power. Sometimes hangs up the page. 
+        // Not shure if faulty code or Firefox acting up.
+        if (element.nodeValue == startElementInnerText &amp;&amp; element.parentElement.nodeName == startElementType) {
+            nodeWithSameTextCounter += 1;
+            targetElement = element;
+        }
+    });
+    if (nodeWithSameTextCounter == 1) {
+        return targetElement;
+    }
+    return false;
+}
+
+/**
+ * Finds and highlights text based on the given parameters
+ * @param {Number} startElementOffsetOfSameType Offset of the same type of element from the start of the page
+ * @param {String} startElementType Type of the start-element
+ * @param {Number} startElementInnerOffset Character offset in the start element
+ * @param {String} startElementInnerText Text of the start element
+ * @param {Number} endElementOffsetOfSameType Offset of the same type of element from the start of the document
+ * @param {String} endElementType Type of the end element
+ * @param {Number} endElementInnerOffset Character offset in the end element
+ * @param {String} endElementInnerText Text of the end element
+ * @param {String} userID ID of the current user
+ * @param {String} userName Name of the user
+ * @param {String} commentID ID of the comment
+ */
+function findAndHighlightText(startElementOffsetOfSameType,
+    startElementType,
+    startElementInnerOffset,
+    startElementInnerText,
+    endElementOffsetOfSameType,
+    endElementType,
+    endElementInnerOffset,
+    endElementInnerText,
+    userID,
+    userName,
+    commentID) {
+    startNode = null;
+    allNodes = textNodesUnder(document.body);
+    startNode = allNodes[startElementOffsetOfSameType];
+    if (startNode == undefined || startNode == null || startNode.nodeValue !== startElementInnerText) {
+        startNode = fullSiteNodeSearch(startElementType, startElementInnerText);
+    }
+    endNode = allNodes[endElementOffsetOfSameType];
+    if (endNode == undefined || endNode == null || endNode.nodeValue !== endElementInnerText) {
+        endNode = fullSiteNodeSearch(endElementType, endElementInnerText);
+    }
+    startTextNode = startNode;
+    endTextNode = endNode;
+    if (startTextNode == null || startTextNode == undefined) {
+        startTextNode = findElementByTextContent(startElementInnerText);
+    }
+    if (endTextNode == null || endTextNode == undefined) {
+        endTextNode = findElementByTextContent(endElementInnerText);
+    }
+    if (startTextNode !== null &amp;&amp; endTextNode !== null) {
+        var range = new Range();
+        range.setStart(startTextNode, startElementInnerOffset);
+        range.setEnd(endTextNode, endElementInnerOffset);
+
+        rectBox = range.getBoundingClientRect();
+        if (rectBox.width == 0) {
+            range = new Range();
+            range.setEnd(startTextNode, startElementInnerOffset);
+            range.setStart(endTextNode, endElementInnerOffset);
+            rectBox = range.getBoundingClientRect();
+        }
+        if (rectBox.width !== 0) {
+            topPixel = rectBox.top + window.scrollY;
+            color = getNameColor(userID);
+            var highlightID = "coFindHighlight-" + commentID;
+            html = `&lt;hr id="${highlightID}" class="coFindHighlightBox" 
+            style="background-color:${color}; 
+            mix-blend-mode: multiply; 
+            pointer-events: none; 
+            margin:0px;padding:0px;
+            position:absolute;
+            width:${rectBox.width + 2}px;
+            height:${rectBox.height + 2}px;
+            top:${topPixel - 2}px;
+            left:${rectBox.left - 2}px
+            ">&lt;/hr>`;
+            document.body.insertAdjacentHTML("beforeend", html);
+            return (rectBox);
+        } else {
+            removeAllADDCommentBoxes();
+            removeAllHighlights();
+            reDrawAll();
+            console.error("Critical highlight error");
+        }
+    }
+    return false;
+}
+
+/**
+ * Adds a Note to a specific position on the page. 
+ * It also sends the info of the added box to the backend.
+ * @param {Number} toppx Number of pixels from the top
+ * @param {Number} leftpx Number of pixels from the left
+ * @param {*} dataElement Data Emenet for the note
+ */
+async function addCommentBox(toppx, leftpx, dataElement) {
+    allCommentBoxes = document.getElementsByClassName("coFindAddComentBox");
+    if (allCommentBoxes.length > 0) {
+        return;
+    }
+    removeAllADDCommentBoxes();
+    return new Promise(function (resolve, reject) {
+        boxheight = 23;
+        boxwidth = 200;
+        if (isTouchDevice == true) {
+            boxheight = 63;
+            boxwidth = 300;
+        }
+        toppx = toppx - 2 * boxheight;
+        leftpx = leftpx - boxwidth;
+        if (toppx &lt; 0) {
+            toppx = 0;
+        }
+        if (leftpx &lt; 0) {
+            leftpx = 0;
+        }
+        inputHeight = boxheight - 6;
+        inputWidth = boxwidth * 0.68;
+        buttonHeight = boxheight;
+        buttonWidth = boxwidth * 0.25;
+        var html = `&lt;div class="coFindAddComentBox" style="height:${boxheight}px;width:${boxwidth}px;top:${toppx}px;left:${leftpx}px;">
+                &lt;input id="coFindTextBox" type="text" style=" height:${inputHeight}px; width:${inputWidth}px;">
+                &lt;button id="coFindAddBoxAddButton" style="width:${buttonWidth}px;height:${buttonHeight}px;">Add&lt;/button>
+                 &lt;/div>`;
+        document.body.insertAdjacentHTML("beforeend", html);
+        var element = document.getElementById("coFindAddBoxAddButton");
+        element.addEventListener("click", function () {
+            content = document.getElementById("coFindTextBox").value;
+            if (content !== "" &amp;&amp; content !== null &amp;&amp; content !== undefined) {
+                returnObject = {
+                    text: content,
+                    data: dataElement
+                }
+                var thisUrl = window.location.href;
+                var thisTitle = document.title;
+                if (thisTitle == undefined || thisTitle == null) {
+                    thisTitle = "";
+                }
+                message = {
+                    type: "socket",
+                    data: {
+                        socketType: "addNote",
+                        text: content,
+                        data: dataElement,
+                        url: thisUrl,
+                        title: thisTitle
+                    }
+                }
+                sendMessageToBackend(message);
+                resolve(returnObject);
+            }
+            resolve(false);
+        });
+    });
+}
+
+/**
+ * Everything has to be redrawn on resize, because text does not align correctly
+ */
+window.addEventListener('resize', function () {
+    reDrawAll()
+}, true);
+
+/**
+ * Redraw all elements on the page
+ */
+function reDrawAll() {
+    removeAllHighlights();
+    removeAllADDCommentBoxes();
+    removeAllComments();
+    redrawAllSiteCommentBoxes();
+    var numberOfCommentsForThisSite = 0;
+    data.forEach(element => {
+        if (element.url == window.location.href) {
+            numberOfCommentsForThisSite += 1;
+            highlightBox = findAndHighlightText(element.startElementOffsetOfSameType,
+                element.startElementType,
+                element.startElementInnerOffset,
+                element.startElementInnerText,
+                element.endElementOffsetOfSameType,
+                element.endElementType,
+                element.endElementInnerOffset,
+                element.endElementInnerText,
+                element.userID,
+                element.userName,
+                element.commentID);
+            if (highlightBox !== false &amp;&amp; highlightBox !== undefined &amp;&amp; highlightBox !== null) {
+                appendReadyCommentBox(element.userName, element.userID, element.text, element.commentID, highlightBox.top, highlightBox.left, element.isCurrentUser)
+            }
+        }
+    });
+    updateSiteCommentNumber(numberOfCommentsForThisSite);
+}
+
+/**
+ * Removes all highlight elements on the page
+ */
+function removeAllHighlights() {
+    var currentAddCommentBox = document.getElementById("coFindTextBox");
+    if (currentAddCommentBox !== undefined &amp;&amp; currentAddCommentBox !== null) {
+        if (currentAddCommentBox == document.activeElement) {
+            return;
+        }
+    }
+    while (document.getElementsByClassName("coFindHighlightBox").length > 0) {
+        allElements = document.getElementsByClassName("coFindHighlightBox");
+        for (i = 0; i &lt; allElements.length; i++) {
+            element = allElements[i];
+            parent = element.parentElement;
+            parent.removeChild(element);
+        }
+    }
+}
+
+/**
+ * Removes all HTML-Elements that enable the user to add a comment text
+ * (Removes the input box and the "add"-button)
+ */
+function removeAllADDCommentBoxes() {
+    var currentAddCommentBox = document.getElementById("coFindTextBox");
+    if (currentAddCommentBox !== undefined &amp;&amp; currentAddCommentBox !== null) {
+        if (currentAddCommentBox == document.activeElement) {
+            return;
+        }
+    }
+    allElements = document.getElementsByClassName("coFindAddComentBox");
+    for (i = 0; i &lt; allElements.length; i++) {
+        element = allElements[i];
+        parent = element.parentElement;
+        parent.removeChild(element);
+    }
+}
+
+/**
+ * Gets all text nodes under the given parent element
+ * @param {Element} node DOM-Element which is the parent element
+ * @returns Array of text nodes
+ */
+function textNodesUnder(node) {
+    var all = [];
+    for (node = node.firstChild; node; node = node.nextSibling) {
+        if (node.nodeType == 3) all.push(node);
+        else all = all.concat(textNodesUnder(node));
+    }
+    return all;
+}
+
+/**
+ * Removes a note 
+ * @param {String} noteID ID of the note
+ */
+function removeComment(noteID) {
+    var message = {
+        type: "socket",
+        data: {
+            socketType: "deleteNote",
+            noteID: noteID
+        }
+    }
+    sendMessageToBackend(message);
+
+}
+
+
+function removeAllComments() {
+    var counter = 0;
+    while (document.getElementsByClassName("coFindComment").length > 0 &amp;&amp; counter &lt; 10) {
+        /*Fixes Bug, that by Selecting all Elements with a class, 
+        then removing them does not remove them all all the time. 
+        May be a Bug in Firefox.*/
+        counter += 1;
+        allElements = document.getElementsByClassName("coFindComment");
+        for (i = 0; i &lt; allElements.length; i++) {
+            element = allElements[i];
+            commentID = element.getAttribute("data-cofind-comment-id");
+            element.childNodes[1].remove
+            parent = element.parentElement;
+            parent.removeChild(element);
+        }
+    }
+}
+/**
+ * Resets the current site data
+ */
+async function resetNotes() {
+    data = [];
+    reDrawAll();
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#aCommentIsOpen">aCommentIsOpen</a></li><li><a href="global.html#addCommentBox">addCommentBox</a></li><li><a href="global.html#addCommentToSiteCommentBox">addCommentToSiteCommentBox</a></li><li><a href="global.html#appendReadyCommentBox">appendReadyCommentBox</a></li><li><a href="global.html#backToStart">backToStart</a></li><li><a href="global.html#checkIfUrlIsAlredyOpen">checkIfUrlIsAlredyOpen</a></li><li><a href="global.html#checkServer">checkServer</a></li><li><a href="global.html#checkServerPersistantData">checkServerPersistantData</a></li><li><a href="global.html#checkStorageChange">checkStorageChange</a></li><li><a href="global.html#closeCommentBox">closeCommentBox</a></li><li><a href="global.html#deleteAccount">deleteAccount</a></li><li><a href="global.html#deleteCommentButtonAction">deleteCommentButtonAction</a></li><li><a href="global.html#deleteGroup">deleteGroup</a></li><li><a href="global.html#deleteIt">deleteIt</a></li><li><a href="global.html#emptyFavoritesBox">emptyFavoritesBox</a></li><li><a href="global.html#emptySidebarContent">emptySidebarContent</a></li><li><a href="global.html#findAndHighlightText">findAndHighlightText</a></li><li><a href="global.html#firstSocketRefresh">firstSocketRefresh</a></li><li><a href="global.html#fullSiteNodeSearch">fullSiteNodeSearch</a></li><li><a href="global.html#generateFavoritesBoxes">generateFavoritesBoxes</a></li><li><a href="global.html#generateSidebarHTML">generateSidebarHTML</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getAllTabs">getAllTabs</a></li><li><a href="global.html#getNameColor">getNameColor</a></li><li><a href="global.html#getNameColorRGB">getNameColorRGB</a></li><li><a href="global.html#getOs">getOs</a></li><li><a href="global.html#getPersistantData">getPersistantData</a></li><li><a href="global.html#GetSelectedText">GetSelectedText</a></li><li><a href="global.html#getSessionID">getSessionID</a></li><li><a href="global.html#gotMessage">gotMessage</a></li><li><a href="global.html#guid">guid</a></li><li><a href="global.html#handleSocketMessage">handleSocketMessage</a></li><li><a href="global.html#handleTabUpdate">handleTabUpdate</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initSiteCommentBox">initSiteCommentBox</a></li><li><a href="global.html#isThisATouchDevice">isThisATouchDevice</a></li><li><a href="global.html#join">join</a></li><li><a href="global.html#joinProject">joinProject</a></li><li><a href="global.html#jump">jump</a></li><li><a href="global.html#leaveGroup">leaveGroup</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#loginBlockIsVisible">loginBlockIsVisible</a></li><li><a href="global.html#loginscanner">loginscanner</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#openCommentBox">openCommentBox</a></li><li><a href="global.html#post">post</a></li><li><a href="global.html#prepareAddNoteAndSend">prepareAddNoteAndSend</a></li><li><a href="global.html#processLoginResult">processLoginResult</a></li><li><a href="global.html#processNotes">processNotes</a></li><li><a href="global.html#processResult">processResult</a></li><li><a href="global.html#put">put</a></li><li><a href="global.html#reDrawAll">reDrawAll</a></li><li><a href="global.html#redrawAllSiteCommentBoxes">redrawAllSiteCommentBoxes</a></li><li><a href="global.html#register">register</a></li><li><a href="global.html#removeAllADDCommentBoxes">removeAllADDCommentBoxes</a></li><li><a href="global.html#removeAllHighlights">removeAllHighlights</a></li><li><a href="global.html#removeComment">removeComment</a></li><li><a href="global.html#removeCommentFromSiteCommentBox">removeCommentFromSiteCommentBox</a></li><li><a href="global.html#resetNotes">resetNotes</a></li><li><a href="global.html#sendMessageToBackend">sendMessageToBackend</a></li><li><a href="global.html#sendMessageToSidebar">sendMessageToSidebar</a></li><li><a href="global.html#sendMessageToTabs">sendMessageToTabs</a></li><li><a href="global.html#sendNewNotesToWebsite">sendNewNotesToWebsite</a></li><li><a href="global.html#sendNewTabs">sendNewTabs</a></li><li><a href="global.html#setBrowserTabUrl">setBrowserTabUrl</a></li><li><a href="global.html#setGroupNameHtml">setGroupNameHtml</a></li><li><a href="global.html#setHub">setHub</a></li><li><a href="global.html#setPersistantData">setPersistantData</a></li><li><a href="global.html#setupSockets">setupSockets</a></li><li><a href="global.html#showAllGroups">showAllGroups</a></li><li><a href="global.html#showComment">showComment</a></li><li><a href="global.html#showPanel">showPanel</a></li><li><a href="global.html#socketsAddWebsiteProposal">socketsAddWebsiteProposal</a></li><li><a href="global.html#socketsDeleteWebsiteProposal">socketsDeleteWebsiteProposal</a></li><li><a href="global.html#socketsLeave">socketsLeave</a></li><li><a href="global.html#startLoginVideoStream">startLoginVideoStream</a></li><li><a href="global.html#startVideoStream">startVideoStream</a></li><li><a href="global.html#stopLoginStream">stopLoginStream</a></li><li><a href="global.html#stopStream">stopStream</a></li><li><a href="global.html#tabClickHelper">tabClickHelper</a></li><li><a href="global.html#tabFavClickHelper">tabFavClickHelper</a></li><li><a href="global.html#tabUnFavClickHelper">tabUnFavClickHelper</a></li><li><a href="global.html#textNodesUnder">textNodesUnder</a></li><li><a href="global.html#updateGroupNameHtml">updateGroupNameHtml</a></li><li><a href="global.html#updateQRCode">updateQRCode</a></li><li><a href="global.html#updateRegisterQRCode">updateRegisterQRCode</a></li><li><a href="global.html#updateSiteCommentNumber">updateSiteCommentNumber</a></li><li><a href="global.html#updateUserNameHtml">updateUserNameHtml</a></li><li><a href="global.html#uuidv4">uuidv4</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Jul 15 2019 16:48:54 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+  {
+  "development": {
+    "config_id": "development",
+    "app_name": "my app",
+    "app_desc": "my app desc",
+    "node_port": 3000,
+    "json_indentation": 4,
+    "database": "my-app-db-dev"
+  },
+  "testing": {
+    "config_id": "testing",
+    "database": "my-app-db-test"
+  },
+  "staging": {
+    "config_id": "staging",
+    "node_port": 8080,
+    "database": "my-app-db-stag"
+  },
+  "production": {
+    "config_id": "production",
+    "node_port": 8080,
+    "database": "my-app-db-prod"
+  },
+  "study": {
+    "id": "20200220_1"
+  },
+  "setup": {
+    "config_id": "setup",
+    "run_setup": "yes",
+    "_run_setup_comment": "choose yes/no",
+    "group": {
+      "name": "20200313",
+      "description": "load from ./config/config.json",
+      "user": "",
+      "_user_comment": "not implemented! auto-select setup.users.user1",
+      "uiMode": "auto"
+    },
+    "users": {
+      "user1": {
+        "username": "Constantin",
+        "password": "pw",
+        "color": "130,171,41"
+      },
+      "user2": {
+        "username": "Eva",
+        "password": "pw",
+        "color": "171,41,130"
+      },
+      "user3": {
+        "username": "Erik",
+        "password": "pw",
+        "color": "105,131,181"
+      },
+      "user4": {
+        "username": "null",
+        "password": "pw",
+        "color": "181,155,105"
+      }
+    }
+  },
+  "language": {
+      "german":{
+          "favorites": "Favoriten",
+          "private": "Privat",
+          "details": "Details",
+          "device": "Gerät",
+          "show"  : "Anzeigen",
+          "delete": "Löschen",
+          "activity": "Aktivitäten",
+          "favored": "Favorisiert von",
+          "yes": "Ja",
+          "cancel": "Abbrechen",
+          "attention": "Achtung!",
+          "message": "Wollen Sie wirklich einen Favoriten mit Kommentaren löschen?",
+          "add": "Einfügen",
+          "shared": "Geteilt",
+          "done": "Fertig",
+          "select": "Bitte wählen Sie Ihren Nutzernamen...",
+          "login": "Bitte wählen Sie zum Einloggen einen Nutzer.",
+          "category": "Details Kategorien"
+      },
+      "english":{
+          "favorites": "Favorites",
+          "private": "Private",
+          "details": "Details",
+          "device": "Device",
+          "show"  : "show",
+          "delete": "delete",
+          "activity": "Activity",
+          "favored": "Favored by",
+          "yes": "Yes",
+          "cancel": "Cancel",
+          "attention": "Attention!",
+          "message": "Do you really want to delete a favorite with comments?",
+          "add": "Add",
+          "shared": "Shared",
+          "done": "Done",
+          "select": "Please select username...",
+          "login": "Please select a user to login.",
+          "category": "Category Details"
+      }
+  }
+}

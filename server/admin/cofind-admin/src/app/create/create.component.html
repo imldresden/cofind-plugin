@@ -1,0 +1,43 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" [routerLink]="['']">CoFind Administration Panel</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
+          aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" [routerLink]="['']">Home <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [routerLink]="['/reports']">Reports</a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" [routerLink]="['/create']">Create</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [routerLink]="['/modify']">Modify</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="row">
+
+  <div class="col-md-2">
+    <div class="vertical-menu">
+      <a id="showCreateUser" class="active" (click)="showCreateUser()">User</a>
+      <a id="showCreateGroup" (click)="showCreateGroup()">Group</a>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="post-widget" *ngIf="create_user == true">
+      <app-create-user></app-create-user>
+    </div>
+    <div class="post-widget" *ngIf="create_group == true">
+      <app-create-group></app-create-group>
+    </div>
+  </div>
+
+</div>

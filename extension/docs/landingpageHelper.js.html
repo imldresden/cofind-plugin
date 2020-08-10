@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: landingpageHelper.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: landingpageHelper.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Author: Lucas Vogel
+ * 
+ * This file is the helper script for the landingpage.
+ * it contains for example all the QR-Scanning logic.
+ * All Functions are here in pairs, because the login
+ * and join logic need separate scanners with different
+ * canvases and possibly different cameras
+ */
+
+/** Instascaner for QR-Scan login */
+loginscanner = new Instascan.Scanner({ video: document.getElementById('videoLogin') });
+loginscanner.addListener('scan', function (content) {
+  processLoginResult(content);
+});
+
+scanner = new Instascan.Scanner({ video: document.getElementById('video') });
+scanner.addListener('scan', function (content) {
+  processResult(content);
+});
+
+/**
+ * Process if the scanner found a QR-Code for login
+ * @param {String} content Content of the scan
+ */
+function processLoginResult(content) {
+  regex = /^user\:([^&lt;>]+)&lt;>password:(.+)$/;
+  var result = content.match(regex);
+  if (result.length == 3) {
+    document.getElementById("username").value = result[1];
+    document.getElementById("password").value = result[2];
+    login();
+  }
+}
+
+/**
+ * Process the content if the scanner found a QR-Code for joining
+ * @param {String} code Content of the scan
+ */
+function processResult(code) {
+  if (code !== null) {
+    var thisData = code;
+    if (thisData.startsWith("hub:")) {
+      hubName = thisData.slice(4, thisData.length);
+      setHub(hubName);
+      join();
+    }
+  }
+}
+
+/**
+ * Starts the video stream for the login screen
+ */
+function startLoginVideoStream() {
+  Instascan.Camera.getCameras().then(function (cameras) {
+    if (cameras.length > 0) {
+      loginscanner.start(cameras[0]);
+    } else {
+      console.error('No cameras found.');
+    }
+  }).catch(function (e) {
+    console.error(e);
+  });
+}
+
+/**
+ * Starts the video stream for the join screen
+ */
+function startVideoStream() {
+  Instascan.Camera.getCameras().then(function (cameras) {
+    if (cameras.length > 0) {
+      scanner.start(cameras[0]);
+    } else {
+      console.error('No cameras found.');
+    }
+  }).catch(function (e) {
+    console.error(e);
+  });
+
+}
+
+/**
+ * stops the video stream for the login window
+ */
+function stopLoginStream() {
+  loginscanner.stop();
+}
+
+/**
+ * stops the stream for the join window
+ */
+function stopStream() {
+  scanner.stop();
+}
+
+/**
+ * Update the QR-Code displayed if a new user registers
+ */
+function updateRegisterQRCode() {
+  var userName = registerUserNameInput.value;
+  var password = registerUserPasswordInput.value;
+  var data = "user:" + userName + "&lt;>password:" + password;
+  var url = qrCodeAPI + data;
+  qrCodeElement.setAttribute("src", url);
+}
+
+/**
+ * Displays a specific panel on the login page
+ * @param {String} panel Panel name
+ */
+function showPanel(panel) {
+  if (panel == "start") {
+    startBox.classList = "";
+  } else {
+    startBox.classList = "hidden";
+  }
+  if (panel == "afterLogin") {
+    showAllGroups();
+    afterLogin.classList = "";
+  } else {
+    afterLogin.classList = "hidden";
+  }
+  if (panel == "createNew") {
+    createBox.classList = "";
+  } else {
+    createBox.classList = "hidden";
+  }
+  if (panel == "joinProject") {
+    joinProjectBox.classList = "";
+  } else {
+    joinProjectBox.classList = "hidden";
+  }
+  if (panel == "register") {
+    registerBox.classList = "";
+  } else {
+    registerBox.classList = "hidden";
+  }
+  if (panel == "delete") {
+    deleteBox.classList = "";
+  } else {
+    deleteBox.classList = "hidden";
+  }
+  if (panel == "inGroup") {
+    inGroupBox.classList = "";
+  } else {
+    inGroupBox.classList = "hidden";
+  }
+}
+
+/**
+ * Sets the ID of the hub into the input field
+ * @param {String} hubName HUB-ID
+ */
+function setHub(hubName) {
+  var element = document.getElementById("hubJoin");
+  element.value = hubName;
+  element.classList = "ok";
+}
+
+/**
+ * Inserts the group name into the box after the user joins a group
+ * @param {String} text Groupname
+ */
+function setGroupNameHtml(text) {
+  var element = document.getElementById("GroupName");
+  if (element != undefined) {
+    element.innerHTML = text;
+  }
+}
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#aCommentIsOpen">aCommentIsOpen</a></li><li><a href="global.html#addCommentBox">addCommentBox</a></li><li><a href="global.html#addCommentToSiteCommentBox">addCommentToSiteCommentBox</a></li><li><a href="global.html#appendReadyCommentBox">appendReadyCommentBox</a></li><li><a href="global.html#backToStart">backToStart</a></li><li><a href="global.html#checkIfUrlIsAlredyOpen">checkIfUrlIsAlredyOpen</a></li><li><a href="global.html#checkServer">checkServer</a></li><li><a href="global.html#checkServerPersistantData">checkServerPersistantData</a></li><li><a href="global.html#checkStorageChange">checkStorageChange</a></li><li><a href="global.html#closeCommentBox">closeCommentBox</a></li><li><a href="global.html#deleteAccount">deleteAccount</a></li><li><a href="global.html#deleteCommentButtonAction">deleteCommentButtonAction</a></li><li><a href="global.html#deleteGroup">deleteGroup</a></li><li><a href="global.html#deleteIt">deleteIt</a></li><li><a href="global.html#emptyFavoritesBox">emptyFavoritesBox</a></li><li><a href="global.html#emptySidebarContent">emptySidebarContent</a></li><li><a href="global.html#findAndHighlightText">findAndHighlightText</a></li><li><a href="global.html#firstSocketRefresh">firstSocketRefresh</a></li><li><a href="global.html#fullSiteNodeSearch">fullSiteNodeSearch</a></li><li><a href="global.html#generateFavoritesBoxes">generateFavoritesBoxes</a></li><li><a href="global.html#generateSidebarHTML">generateSidebarHTML</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getAllTabs">getAllTabs</a></li><li><a href="global.html#getNameColor">getNameColor</a></li><li><a href="global.html#getNameColorRGB">getNameColorRGB</a></li><li><a href="global.html#getOs">getOs</a></li><li><a href="global.html#getPersistantData">getPersistantData</a></li><li><a href="global.html#GetSelectedText">GetSelectedText</a></li><li><a href="global.html#getSessionID">getSessionID</a></li><li><a href="global.html#gotMessage">gotMessage</a></li><li><a href="global.html#guid">guid</a></li><li><a href="global.html#handleSocketMessage">handleSocketMessage</a></li><li><a href="global.html#handleTabUpdate">handleTabUpdate</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initSiteCommentBox">initSiteCommentBox</a></li><li><a href="global.html#isThisATouchDevice">isThisATouchDevice</a></li><li><a href="global.html#join">join</a></li><li><a href="global.html#joinProject">joinProject</a></li><li><a href="global.html#jump">jump</a></li><li><a href="global.html#leaveGroup">leaveGroup</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#loginBlockIsVisible">loginBlockIsVisible</a></li><li><a href="global.html#loginscanner">loginscanner</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#openCommentBox">openCommentBox</a></li><li><a href="global.html#post">post</a></li><li><a href="global.html#prepareAddNoteAndSend">prepareAddNoteAndSend</a></li><li><a href="global.html#processLoginResult">processLoginResult</a></li><li><a href="global.html#processNotes">processNotes</a></li><li><a href="global.html#processResult">processResult</a></li><li><a href="global.html#put">put</a></li><li><a href="global.html#reDrawAll">reDrawAll</a></li><li><a href="global.html#redrawAllSiteCommentBoxes">redrawAllSiteCommentBoxes</a></li><li><a href="global.html#register">register</a></li><li><a href="global.html#removeAllADDCommentBoxes">removeAllADDCommentBoxes</a></li><li><a href="global.html#removeAllHighlights">removeAllHighlights</a></li><li><a href="global.html#removeComment">removeComment</a></li><li><a href="global.html#removeCommentFromSiteCommentBox">removeCommentFromSiteCommentBox</a></li><li><a href="global.html#resetNotes">resetNotes</a></li><li><a href="global.html#sendMessageToBackend">sendMessageToBackend</a></li><li><a href="global.html#sendMessageToSidebar">sendMessageToSidebar</a></li><li><a href="global.html#sendMessageToTabs">sendMessageToTabs</a></li><li><a href="global.html#sendNewNotesToWebsite">sendNewNotesToWebsite</a></li><li><a href="global.html#sendNewTabs">sendNewTabs</a></li><li><a href="global.html#setBrowserTabUrl">setBrowserTabUrl</a></li><li><a href="global.html#setGroupNameHtml">setGroupNameHtml</a></li><li><a href="global.html#setHub">setHub</a></li><li><a href="global.html#setPersistantData">setPersistantData</a></li><li><a href="global.html#setupSockets">setupSockets</a></li><li><a href="global.html#showAllGroups">showAllGroups</a></li><li><a href="global.html#showComment">showComment</a></li><li><a href="global.html#showPanel">showPanel</a></li><li><a href="global.html#socketsAddWebsiteProposal">socketsAddWebsiteProposal</a></li><li><a href="global.html#socketsDeleteWebsiteProposal">socketsDeleteWebsiteProposal</a></li><li><a href="global.html#socketsLeave">socketsLeave</a></li><li><a href="global.html#startLoginVideoStream">startLoginVideoStream</a></li><li><a href="global.html#startVideoStream">startVideoStream</a></li><li><a href="global.html#stopLoginStream">stopLoginStream</a></li><li><a href="global.html#stopStream">stopStream</a></li><li><a href="global.html#tabClickHelper">tabClickHelper</a></li><li><a href="global.html#tabFavClickHelper">tabFavClickHelper</a></li><li><a href="global.html#tabUnFavClickHelper">tabUnFavClickHelper</a></li><li><a href="global.html#textNodesUnder">textNodesUnder</a></li><li><a href="global.html#updateGroupNameHtml">updateGroupNameHtml</a></li><li><a href="global.html#updateQRCode">updateQRCode</a></li><li><a href="global.html#updateRegisterQRCode">updateRegisterQRCode</a></li><li><a href="global.html#updateSiteCommentNumber">updateSiteCommentNumber</a></li><li><a href="global.html#updateUserNameHtml">updateUserNameHtml</a></li><li><a href="global.html#uuidv4">uuidv4</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Jul 15 2019 16:48:54 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

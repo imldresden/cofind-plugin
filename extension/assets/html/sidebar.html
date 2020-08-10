@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title id="title">CoFind</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <!--<link rel="stylesheet" href="./assets/css/sidebar.css">-->
+    <!--<link rel="stylesheet" href="./assets/css/sidebarFlex.css">-->
+</head>
+
+<body>
+<div id="sidebar">
+    <div class="leftSidebar">
+        <div id="coFindUserButtons"></div>
+
+        <div id="loginSection">
+            <div id="loginBox">
+                Please select a user to login.
+            </div>
+        </div>
+
+        <section id="proposalSection" class="hidden">
+            <!--<div class="panelFavSection" style="background-color: rgb(193, 193, 193)">-->
+                <!--<p class="sectionFavorites" id="sectionFavorites">Favorites</p>-->
+                <!--<a id="detail-0" href="detailpage.html#favorite" target="_blank">Details</a>-->
+            <!--</div>-->
+            <div id="proposals"></div>
+        </section>
+
+        <section id="activitySection" class="hidden">
+            <div id="activity"></div>
+        </section>
+
+        <section id="privateSection" class="hidden">
+            <div id="private"></div>
+        </section>
+
+    </div>
+
+    <div class="rightSidebar">
+
+        <section id="rightSection">
+            <div id="rightSidebar">
+                <!--for drop-down of existing proposals in current content page-->
+                <div id="coFindNoteBox"></div>
+                <!--for add-snapshot button-->
+                <div id="coFindSnapshotBox"></div>
+                <!--for add-or-remove-explicit button-->
+                <div id="coFindExplicitBox"></div>
+                <!--for add-or-remove-proposal button-->
+                <div id="coFindProposalBox"></div>
+            </div>
+        </section>
+
+        <dialog role="dialog" aria-labelledby="dialog-heading">
+            <h2 id="dialog-heading">Attention!</h2>
+            <p id="dialog-text"> Do you really want to delete a favorite with comments?</p>
+            <button id="yes-dialog">Yes</button>
+            <button id="close-dialog">Cancel</button>
+        </dialog>
+
+    </div>
+
+</div>
+
+
+<script src="../js/controller/serverController.js"></script>
+<script src="../js/handler/httpHandler.js"></script>
+<script src="../js/sidebar/sidebarMessageHandler.js"></script>
+
+
+
+<script src="../js/handler/localStorageHandler.js"></script>
+<script src="../js/controller/tabController.js"></script>
+<script src="../js/controller/configController.js"></script>
+<script src="../js/sidebar/loginHelper.js"></script>
+<script src="../js/sidebar/sidebarSockets.js"></script>
+<script src="../js/sidebar/sidebarEventListeners.js"></script>
+<script src="../js/sidebar/sidebarHelper.js"></script>
+<script src="../js/sidebar/sidebarRight.js"></script>
+<script src="../js/sidebar/sidebar.js"></script>
+
+
+
+
+
+<!--<script src="./assets/js/globalHelper.js"></script>-->
+<!--<script src="./assets/js/color-hash.js"></script>-->
+<!--&lt;!&ndash;<script src="./assets/js/languageConfig.js"></script>&ndash;&gt;-->
+<!--<script src="./assets/js/httpHandler.js"></script>-->
+<!--<script src="./assets/js/sidebarHelper.js"></script>-->
+<!--<script src="./assets/js/sidebarMessageHandler.js"></script>-->
+<!--<script src="./assets/js/sidebarTiles.js"></script>-->
+<!--&lt;!&ndash;<script src="./assets/js/sidebar.js"></script>&ndash;&gt;-->
+<!--&lt;!&ndash;<script src="./assets/js/sidebarFlex.js"></script>&ndash;&gt;-->
+<!--<script src="./assets/js/socket.io.js"></script>-->
+<!--<script src="./assets/js/sidebarSockets.js"></script>-->
+<!--<script src="./assets/js/backgroundSocketsHandler.jsHandler.js"></script>-->
+<!--<script src="./assets/js/backgroundMessageHandler.js"></script>-->
+<!--<script src="./assets/js/handler/snapshotHandler.js"></script>-->
+<!--<script src="./assets/js/handler/explicitHandler.js"></script>-->
+</body>
+
+</html>

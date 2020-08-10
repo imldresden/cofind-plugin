@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: landingpage.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: landingpage.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Author: Lucas Vogel
+ * 
+ * This file is the main script for the landingpage.
+ */
+
+var server = "http://localhost:3000";
+
+
+var startBox = document.getElementById("start");
+var afterLogin = document.getElementById("afterLogin");
+var createBox = document.getElementById("createProject");
+var joinProjectBox = document.getElementById("joinProject");
+var registerBox = document.getElementById("register");
+var deleteBox = document.getElementById("delete");
+
+var groupsContainer = document.getElementById("allGroupsList");
+
+const videoElement = document.getElementById('video');
+var localStream;
+var scanner;
+
+var registerUserNameInput = document.getElementById("registerUsername");
+var registerUserPasswordInput = document.getElementById("registerPassword");
+
+var qrCodeAPI = "https://chart.googleapis.com/chart?cht=qr&amp;chs=300x300&amp;chld=L|0&amp;chl=";
+var qrCodeElement = document.getElementById("registerQRCode");
+
+var canvasElement = document.createElement("canvas");
+var canvasContext = canvasElement.getContext("2d");
+
+var deleteInput = document.getElementById("deleteUsername");
+
+var createProjectInput = document.getElementById("createProjectInput");
+var projectDescription = document.getElementById("createProjectDescriptionInput");
+
+var joinProjectInput = document.getElementById("hubJoin");
+
+var inGroupBox = document.getElementById("inGroup");
+
+/**
+ * Startup function.
+ * Sets up server, user and group
+ */
+async function init() {
+  var serverStatus = await checkServer();
+  var serverFromStorage = await getPersistantData("server");
+  if (serverFromStorage != undefined &amp;&amp; serverFromStorage != null &amp;&amp; serverFromStorage != "" &amp;&amp; serverFromStorage != "null") {
+    server = serverFromStorage;
+  }
+  var userID = await getPersistantData("userID");
+  var groupID = await getPersistantData("groupID");
+  if (userID !== undefined &amp;&amp; userID !== null &amp;&amp; userID !== false &amp;&amp; userID !== "") {
+    if (groupID !== undefined &amp;&amp; groupID !== null &amp;&amp; groupID !== false &amp;&amp; groupID !== "") {
+      showPanel("inGroup");
+      var groupURL = server + "/groups/" + groupID + "/current";
+      var groupInfo = await get(groupURL);
+      var groupName = groupInfo.name;
+      if (groupName != undefined &amp;&amp; groupName != null &amp;&amp; groupName != "") {
+        setGroupNameHtml(groupName);
+      }
+    } else {
+      showPanel("afterLogin");
+    }
+  } else {
+    startLoginVideoStream();
+  }
+}
+init();
+
+/**
+ * Deletes a user based on the username
+ */
+async function deleteAccount() {
+  var userName = deleteInput.value;
+  var getUserFetchUrl = server + "/users/";
+  var allUsers = await get(getUserFetchUrl);
+  var userID = null;
+  allUsers.forEach(user => {
+    if (user.username == userName) {
+      userID = user._id;
+    }
+  });
+  if (userID == null) {
+    alert("User not found!");
+  } else {
+    var url = server + "/users/" + userID;
+    var result = await deleteIt(url, {});
+    showPanel("start");
+  }
+}
+
+/**
+ * performs the user login
+ */
+async function login() {
+  var userName = document.getElementById("username").value;
+  var password = document.getElementById("password").value;
+  if (userName.length >= 2 &amp;&amp; password.length >= 2) {
+    url = server + "/users/login/" + userName + "/" + password;
+    var loginData = await get(url);
+    if (loginData !== undefined &amp;&amp; loginData !== null &amp;&amp; loginData !== false) {
+      var userID = loginData._id;
+      setPersistantData("userID", userID);
+      showPanel("afterLogin");
+    }
+    stopLoginStream();
+  }
+}
+
+/**
+ * Creates a new group
+ */
+async function newGroup() {
+  var projectName = createProjectInput.value;
+  var projectDescriptionValue = projectDescription.value;
+  if (projectDescriptionValue == "") {
+    projectDescriptionValue = "no description"
+  }
+  var userID = await getPersistantData("userID");
+  var userUrl = server + "/users/" + userID;
+  var user = await get(userUrl);
+  if (projectName !== undefined &amp;&amp; projectName !== null &amp;&amp; projectName !== "") {
+    payload = {
+      name: projectName,
+      description: projectDescriptionValue,
+      user: userID
+    }
+    var groupUrl = server + "/groups/";
+    var newGroup = await post(groupUrl, payload);
+    if (newGroup !== false) {
+      showPanel("afterLogin");
+    }
+  }
+}
+
+/**
+ * Is called to start the video stream and setup joining the project 
+ * @param {*} groupID optional. For future use.
+ */
+function joinProject(groupID = "") {
+  startVideoStream();
+}
+/**
+ * Stops video stream after canceling tje join action
+ */
+function backToStart() {
+  stopStream();
+}
+
+/**
+ * performs a logout
+ */
+async function logout() {
+  var userID = await getPersistantData("userID");
+  if (userID !== undefined &amp;&amp; userID !== null &amp;&amp; userID !== "") {
+    var url = server + "/users/" + userID + "/logout";
+    get(url);
+    setPersistantData("userID", "");
+    showPanel("start");
+    startLoginVideoStream();
+  }
+
+}
+
+/**
+ * Shows all groups to join.
+ * This can be called repeatedly to allways show the current groups,
+ * however this was removed as of a wish from Anke, as this "flickers" once
+ * every X Seconds as it updates the html.
+ */
+async function showAllGroups() {
+  groupsContainer.innerHTML = "";
+  var allGroupsUrl = server + "/groups/";
+  var allGroupsResult = await get(allGroupsUrl);
+  var userID = await getPersistantData("userID");
+  allGroupsResult.forEach(group => {
+    var html = "";
+    var buttonClass = "";
+    var groupUserId = group.user__id;
+    var isDeleted = group.isDeleted;
+    if (isDeleted != undefined &amp;&amp; isDeleted == true) {
+      //Group ignored because it is deleted. 
+      // This can be improved or shown in future use.
+    } else {
+      if (groupUserId == undefined) {
+        groupUserId = group.user;
+      }
+      if (userID != groupUserId) {
+        buttonClass = "big";
+      }
+      var groupButtonID = "coFind-group-" + group._id;
+      var groupDeleteButtonID = "coFind-group-delete-" + group._id;
+      html += `&lt;div class="group">&lt;div class="${buttonClass}" id="${groupButtonID}">${group.name}&lt;br>
+                &lt;span class="groupdescription">${group.description}&lt;/span>&lt;/div>`;
+      if (userID == groupUserId) {
+        html += `&lt;button class="deleteGroup" id="${groupDeleteButtonID}">X&lt;/button>`;
+      }
+      html += `&lt;/div>`;
+      groupsContainer.insertAdjacentHTML("beforeend", html);
+      var groupButton = document.getElementById(groupButtonID);
+      groupButton.addEventListener("click", async () => {
+        var joinGroup = await join(group._id); //Onclick: join group
+      });
+      if (userID == groupUserId) {
+        var groupDeleteButton = document.getElementById(groupDeleteButtonID);
+        groupDeleteButton.addEventListener("click", () => {
+          deleteGroup(group._id);
+        });
+      }
+    }
+  });
+}
+
+/**
+ * Deleting a group with the delete button
+ * @param {*} id ID of the group
+ */
+async function deleteGroup(id) {
+  if (id !== undefined &amp;&amp; id !== null &amp;&amp; id !== "") {
+    if (confirm("Are you sure?")) {
+      var url = server + "/groups/" + id + "/delete";
+      var putResult = await put(url, {});
+      showAllGroups();
+    }
+  }
+}
+
+/**
+ * Joining a group.
+ * @param {*} id optional. ID of the Group to join, otherwise it takes the ID from the input field.
+ * @returns promise that resolves true if the join was successfull, otherwise false.
+ */
+async function join(id = "") {
+  return new Promise(async function (resolve, reject) {
+    if (id == "") {
+      id = joinProjectInput.value;
+    }
+    var user = await getPersistantData("userID");
+    if (user == undefined || user == null || user == "") {
+      alert("USER not found. This is an internal error, please reload this addon in about:debugging.");
+      return;
+    }
+    var deviceName = getOs();
+    var mac = guid();
+    if (id != "" &amp;&amp; user != "") {
+      var url = server + `/groups/${id}/join/users/${user}`;
+      var payload = {
+        name: deviceName,
+        mac: mac
+      }
+      var joinResult = await post(url, payload);
+      if (joinResult != undefined &amp;&amp; joinResult != false) {
+        setPersistantData("sessionID", joinResult._id);
+        setPersistantData("groupID", id);
+        sendMessageToSidebar("join");
+        var groupURL = server + "/groups/" + id + "/current";
+
+        var groupInfo = await get(groupURL);
+        var groupName = groupInfo.name;
+        if (groupName != undefined &amp;&amp; groupName != null &amp;&amp; groupName != "") {
+          setGroupNameHtml(groupName);
+        }
+        showPanel("inGroup");
+        resolve(true);
+        return;
+      }
+    }
+    resolve(false);
+  });
+}
+
+/**
+ * Leaving a group
+ */
+async function leaveGroup() {
+  var groupID = await getPersistantData("groupID");
+  var userID = await getPersistantData("userID");
+  // get a extensive group object
+  if (groupID != undefined &amp;&amp; groupID != null &amp;&amp; groupID != "") {
+    var message = {
+      type: "socket",
+      data: {
+        socketType: "disconnect",
+        groupID: groupID,
+        userID: userID
+      }
+    }
+    sendMessageToBackend(message);
+    var leaveMessage = {
+      type: "leave",
+      data: {}
+    }
+    sendMessageToTabs(leaveMessage);
+  }
+  setPersistantData("groupID", "");
+  setPersistantData("sessionID", "");
+  setGroupNameHtml("");
+  var userID = await getPersistantData("userID");
+  if (userID !== undefined &amp;&amp; userID !== null &amp;&amp; userID !== false &amp;&amp; userID !== "") {
+    showPanel("afterLogin");
+  } else {
+    showPanel("start");
+  }
+  sendMessageToSidebar("leave");
+
+}
+
+
+/**
+ * Register a new user
+ */
+async function register() {
+  var userName = registerUserNameInput.value;
+  var password = registerUserPasswordInput.value;
+  var url = server + "/users/";
+  var allCurrentUsers = await get(url);
+  if (allCurrentUsers !== undefined &amp;&amp; allCurrentUsers !== null) {
+    allCurrentUsers.forEach(user => {
+      if (user.username == userName) {
+        alert("User already exists. Please use a different username.")
+        return;
+      }
+    });
+  }
+  var payload = {
+    username: userName,
+    password: password
+  };
+  var result = await post(url, payload);
+  if (result !== undefined &amp;&amp; result !== null) {
+    showPanel("start");
+  }
+
+}
+
+
+/* 
+Because onclick is "unsafe" for extensions, the following listeners are the 
+only option to realize interaction events (click).
+*/
+
+document.querySelectorAll(".loginButton").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    login();
+  }));
+document.querySelectorAll(".newProject").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    showPanel("createNew");
+  }));
+document.querySelectorAll(".newProjectSubmit").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    newGroup();
+  }));
+document.querySelectorAll(".joinProject").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    showPanel("joinProject");
+    joinProject();
+  }));
+document.querySelectorAll(".joinProjectSubmit").forEach(elem => elem.addEventListener("click",
+  async (element) => {
+    var joinGroup = await join();
+  }));
+document.querySelectorAll(".backToStart").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    showPanel("afterLogin");
+    backToStart();
+  }));
+document.querySelectorAll(".logoutButton").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    logout();
+  }));
+document.querySelectorAll(".registerButton").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    //Opens Panel, so that user can register as a new User
+    showPanel("register");
+  }));
+document.querySelectorAll(".registerUserButton").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    //Goes back to start panel and actually registers the user
+    register();
+  }));
+document.querySelectorAll(".backToLogin").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    showPanel("start");
+  }));
+document.querySelectorAll(".deleteButton").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    showPanel("delete");
+  }));
+document.querySelectorAll(".deleteUserButton").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    deleteAccount();
+  }));
+document.querySelectorAll(".leaveGroupButton").forEach(elem => elem.addEventListener("click",
+  (element) => {
+    leaveGroup();
+  }));
+
+
+/* 
+Because onkeydown is "unsafe" for extensions, the following listeners are the 
+only option to realize interaction events (keyboard interaction).
+*/
+registerUserNameInput.addEventListener("keydown", () => {
+  updateRegisterQRCode();
+});
+registerUserNameInput.addEventListener("keyup", () => {
+  updateRegisterQRCode();
+});
+registerUserPasswordInput.addEventListener("keydown", () => {
+  updateRegisterQRCode();
+});
+registerUserPasswordInput.addEventListener("keyup", () => {
+  updateRegisterQRCode();
+});
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#aCommentIsOpen">aCommentIsOpen</a></li><li><a href="global.html#addCommentBox">addCommentBox</a></li><li><a href="global.html#addCommentToSiteCommentBox">addCommentToSiteCommentBox</a></li><li><a href="global.html#appendReadyCommentBox">appendReadyCommentBox</a></li><li><a href="global.html#backToStart">backToStart</a></li><li><a href="global.html#checkIfUrlIsAlredyOpen">checkIfUrlIsAlredyOpen</a></li><li><a href="global.html#checkServer">checkServer</a></li><li><a href="global.html#checkServerPersistantData">checkServerPersistantData</a></li><li><a href="global.html#checkStorageChange">checkStorageChange</a></li><li><a href="global.html#closeCommentBox">closeCommentBox</a></li><li><a href="global.html#deleteAccount">deleteAccount</a></li><li><a href="global.html#deleteCommentButtonAction">deleteCommentButtonAction</a></li><li><a href="global.html#deleteGroup">deleteGroup</a></li><li><a href="global.html#deleteIt">deleteIt</a></li><li><a href="global.html#emptyFavoritesBox">emptyFavoritesBox</a></li><li><a href="global.html#emptySidebarContent">emptySidebarContent</a></li><li><a href="global.html#findAndHighlightText">findAndHighlightText</a></li><li><a href="global.html#firstSocketRefresh">firstSocketRefresh</a></li><li><a href="global.html#fullSiteNodeSearch">fullSiteNodeSearch</a></li><li><a href="global.html#generateFavoritesBoxes">generateFavoritesBoxes</a></li><li><a href="global.html#generateSidebarHTML">generateSidebarHTML</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getAllTabs">getAllTabs</a></li><li><a href="global.html#getNameColor">getNameColor</a></li><li><a href="global.html#getNameColorRGB">getNameColorRGB</a></li><li><a href="global.html#getOs">getOs</a></li><li><a href="global.html#getPersistantData">getPersistantData</a></li><li><a href="global.html#GetSelectedText">GetSelectedText</a></li><li><a href="global.html#getSessionID">getSessionID</a></li><li><a href="global.html#gotMessage">gotMessage</a></li><li><a href="global.html#guid">guid</a></li><li><a href="global.html#handleSocketMessage">handleSocketMessage</a></li><li><a href="global.html#handleTabUpdate">handleTabUpdate</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initSiteCommentBox">initSiteCommentBox</a></li><li><a href="global.html#isThisATouchDevice">isThisATouchDevice</a></li><li><a href="global.html#join">join</a></li><li><a href="global.html#joinProject">joinProject</a></li><li><a href="global.html#jump">jump</a></li><li><a href="global.html#leaveGroup">leaveGroup</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#loginBlockIsVisible">loginBlockIsVisible</a></li><li><a href="global.html#loginscanner">loginscanner</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#openCommentBox">openCommentBox</a></li><li><a href="global.html#post">post</a></li><li><a href="global.html#prepareAddNoteAndSend">prepareAddNoteAndSend</a></li><li><a href="global.html#processLoginResult">processLoginResult</a></li><li><a href="global.html#processNotes">processNotes</a></li><li><a href="global.html#processResult">processResult</a></li><li><a href="global.html#put">put</a></li><li><a href="global.html#reDrawAll">reDrawAll</a></li><li><a href="global.html#redrawAllSiteCommentBoxes">redrawAllSiteCommentBoxes</a></li><li><a href="global.html#register">register</a></li><li><a href="global.html#removeAllADDCommentBoxes">removeAllADDCommentBoxes</a></li><li><a href="global.html#removeAllHighlights">removeAllHighlights</a></li><li><a href="global.html#removeComment">removeComment</a></li><li><a href="global.html#removeCommentFromSiteCommentBox">removeCommentFromSiteCommentBox</a></li><li><a href="global.html#resetNotes">resetNotes</a></li><li><a href="global.html#sendMessageToBackend">sendMessageToBackend</a></li><li><a href="global.html#sendMessageToSidebar">sendMessageToSidebar</a></li><li><a href="global.html#sendMessageToTabs">sendMessageToTabs</a></li><li><a href="global.html#sendNewNotesToWebsite">sendNewNotesToWebsite</a></li><li><a href="global.html#sendNewTabs">sendNewTabs</a></li><li><a href="global.html#setBrowserTabUrl">setBrowserTabUrl</a></li><li><a href="global.html#setGroupNameHtml">setGroupNameHtml</a></li><li><a href="global.html#setHub">setHub</a></li><li><a href="global.html#setPersistantData">setPersistantData</a></li><li><a href="global.html#setupSockets">setupSockets</a></li><li><a href="global.html#showAllGroups">showAllGroups</a></li><li><a href="global.html#showComment">showComment</a></li><li><a href="global.html#showPanel">showPanel</a></li><li><a href="global.html#socketsAddWebsiteProposal">socketsAddWebsiteProposal</a></li><li><a href="global.html#socketsDeleteWebsiteProposal">socketsDeleteWebsiteProposal</a></li><li><a href="global.html#socketsLeave">socketsLeave</a></li><li><a href="global.html#startLoginVideoStream">startLoginVideoStream</a></li><li><a href="global.html#startVideoStream">startVideoStream</a></li><li><a href="global.html#stopLoginStream">stopLoginStream</a></li><li><a href="global.html#stopStream">stopStream</a></li><li><a href="global.html#tabClickHelper">tabClickHelper</a></li><li><a href="global.html#tabFavClickHelper">tabFavClickHelper</a></li><li><a href="global.html#tabUnFavClickHelper">tabUnFavClickHelper</a></li><li><a href="global.html#textNodesUnder">textNodesUnder</a></li><li><a href="global.html#updateGroupNameHtml">updateGroupNameHtml</a></li><li><a href="global.html#updateQRCode">updateQRCode</a></li><li><a href="global.html#updateRegisterQRCode">updateRegisterQRCode</a></li><li><a href="global.html#updateSiteCommentNumber">updateSiteCommentNumber</a></li><li><a href="global.html#updateUserNameHtml">updateUserNameHtml</a></li><li><a href="global.html#uuidv4">uuidv4</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Jul 15 2019 16:48:54 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

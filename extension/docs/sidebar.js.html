@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: sidebar.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: sidebar.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Author: Lucas Vogel
+ * 
+ * This file is the main file for the sidebar
+ */
+
+var contentContainer = document.getElementById("content");
+var thumbnailBaseURL = "https://s2.googleusercontent.com/s2/favicons?domain="; //for the qr-code
+
+var currentUserID = "";
+var server = "http://localhost:3000";
+
+/**
+ * Startup script, calls the generation of QR-Code, favorites and open tabs
+ */
+async function init() {
+    setPersistantData("proposals", []);
+    var serverstatus = await checkServer();
+    checkStorageChange();
+    generateSidebarHTML();
+    generateFavoritesBoxes();
+    updateQRCode();
+}
+
+window.onload = function () {
+    //for Sockets, which are added later, 
+    //so that the startup script loads 
+    //when the page is finished loading
+    init();
+}
+
+
+/**
+ * Generate the favorites box
+ * @param {Object} groupInfos optional. Object with all the group infos in it. 
+ * Otherwise it gets the group infos via REST-API.
+ */
+function generateFavoritesBoxes(groupInfos = null) {
+    return new Promise(async function (resolve, reject) {
+        var tabIDs = [];
+        if (groupInfos == null) {
+            var group = await getPersistantData("groupID");
+            var url = server + "/groups/" + group + "/current";
+            groupInfos = await get(url);
+        }
+        var html = "";
+        if (groupInfos.hasOwnProperty("websiteProposals")) {
+            var deletedProposals = [];
+            setPersistantData("proposals", groupInfos.websiteProposals);
+            for (proposal of groupInfos.websiteProposals) {
+                var userID = proposal.user._id;
+                var color = getNameColorRGB(userID);
+                var tabID = proposal._id;
+                html += `&lt;div class="tab" id="${tabID}" title="${proposal.title}" data-user-id="${proposal.user._id}" data-url="${proposal.link}">
+                         &lt;img data-url="${proposal.link}" id="img-${tabID}" src="https://s2.googleusercontent.com/s2/favicons?domain=${proposal.link}">
+                         &lt;b data-url="${proposal.link}" id="title-${tabID}">`;
+                if (proposal.hasOwnProperty("notes")) {
+                    if (proposal.notes.length > 0) {
+                        var numberComments = 0;
+                        for (note of proposal.notes) {
+                            if (note.isDeleted == false) {
+                                numberComments += 1;
+                            }
+                        }
+                        if (numberComments > 0) {
+                            html += `&lt;div class="commentNumberContainerFavTabs">${numberComments}&lt;/div>`;
+                        }
+                    }
+                }
+                html += `${proposal.title}&lt;/b>&lt;br>
+                               &lt;span data-url="${proposal.link}" id="url-${tabID}">${proposal.link}&lt;/span>
+                               &lt;div id="fav-${tabID}" data-id="${tabID}" data-url="${proposal.link}" style="background-color:rgb(${color})" class="favMarkedContainer">&lt;/div>
+                               &lt;/div>`;
+                tabIDs.push(tabID);
+            }
+            var container = document.getElementById("favorites");
+            container.innerHTML = html;
+
+            for (tabID of tabIDs) {
+                var thistab = document.getElementById(tabID);
+                var tabfav = document.getElementById("fav-" + tabID);
+                if (thistab != undefined) {
+                    thistab.addEventListener("click", (event) => {
+                        tabClickHelper(event);
+                    });
+                }
+                if (tabfav != undefined) {
+                    tabfav.addEventListener("click", (event) => {
+                        tabUnFavClickHelper(event);
+                    });
+                }
+
+            }
+        }
+    });
+}
+
+/**
+ * Generates list of all Users and their open tabs
+ * @param {Object} groupInfos optional. All Group infos. 
+ * Otherwise it will get the infos from the REST-API
+ */
+async function generateSidebarHTML(groupInfos = null) {
+    return new Promise(async function (resolve, reject) {
+        var tabIDs = [];
+        if (groupInfos == null) {
+            var group = await getPersistantData("groupID");
+            var url = server + "/groups/" + group + "/current";
+            groupInfos = await get(url);
+        }
+        var html = "";
+        if (groupInfos.hasOwnProperty("members")) {
+            for (member of groupInfos.members) {
+                var userID = member.user._id;
+                var color = getNameColorRGB(userID);
+                html += `&lt;section style="border-left-color:rgb(${color});background-color: rgba(${color},0.6)" data-user-id="${userID}">`;
+                html += `&lt;p>${member.user.username}&lt;/p>&lt;br/>`;
+                for (session of member.sessions) {
+                    if (session.tabGroups.length > 0) {
+                        html += `&lt;p class="sectionDescription">${session.device.name}&lt;/p>&lt;br>`;
+                        for (tabGroup of session.tabGroups) {
+                            if (tabGroup.tabs.length > 0) {
+                                var tabClassName = "tab";
+                                if (tabGroup.tabs.length > 5) {
+                                    tabClassName += " compact";
+                                }
+                                for (tab of tabGroup.tabs) {
+                                    var tabID = tab.number + "-" + tab._id;
+                                    html += `&lt;div class="${tabClassName}" id="${tabID}" title="${tab.title}" data-user-id="${tab._id}" data-url="${tab.url}">
+                                            &lt;img data-url="${tab.url}" id="img-${tabID}" src="https://s2.googleusercontent.com/s2/favicons?domain=${tab.url}">
+                                            &lt;b data-url="${tab.url}" id="title-${tabID}">${tab.title}&lt;/b>&lt;br>
+                                            &lt;span data-url="${tab.url}" id="url-${tabID}">${tab.url}&lt;/span>
+                                            &lt;div id="fav-${tabID}" data-id="${tabID}" data-url="${tab.url}" style="color:rgb(${color})" class="favContainer">&lt;/div>
+                                            &lt;/div>`;
+                                    tabIDs.push(tabID);
+                                }
+
+                            }
+                        }
+                    }
+                //Remaining Session, end of tabgroup
+                }
+                html += "&lt;/section>"
+                //Remaining USER, end of sessions
+            }
+            var container = document.getElementById("content");
+            container.innerHTML = html;
+            for (tabID of tabIDs) {
+                var thistab = document.getElementById(tabID);
+                var tabfav = document.getElementById("fav-" + tabID);
+                if (thistab != undefined) {
+                    thistab.addEventListener("click", (event) => {
+                        tabClickHelper(event);
+                    });
+                }
+                if (tabfav != undefined) {
+                    tabfav.addEventListener("click", (event) => {
+                        tabFavClickHelper(event);
+                    });
+                }
+            }
+        }
+    });
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#aCommentIsOpen">aCommentIsOpen</a></li><li><a href="global.html#addCommentBox">addCommentBox</a></li><li><a href="global.html#addCommentToSiteCommentBox">addCommentToSiteCommentBox</a></li><li><a href="global.html#appendReadyCommentBox">appendReadyCommentBox</a></li><li><a href="global.html#backToStart">backToStart</a></li><li><a href="global.html#checkIfUrlIsAlredyOpen">checkIfUrlIsAlredyOpen</a></li><li><a href="global.html#checkServer">checkServer</a></li><li><a href="global.html#checkServerPersistantData">checkServerPersistantData</a></li><li><a href="global.html#checkStorageChange">checkStorageChange</a></li><li><a href="global.html#closeCommentBox">closeCommentBox</a></li><li><a href="global.html#deleteAccount">deleteAccount</a></li><li><a href="global.html#deleteCommentButtonAction">deleteCommentButtonAction</a></li><li><a href="global.html#deleteGroup">deleteGroup</a></li><li><a href="global.html#deleteIt">deleteIt</a></li><li><a href="global.html#emptyFavoritesBox">emptyFavoritesBox</a></li><li><a href="global.html#emptySidebarContent">emptySidebarContent</a></li><li><a href="global.html#findAndHighlightText">findAndHighlightText</a></li><li><a href="global.html#firstSocketRefresh">firstSocketRefresh</a></li><li><a href="global.html#fullSiteNodeSearch">fullSiteNodeSearch</a></li><li><a href="global.html#generateFavoritesBoxes">generateFavoritesBoxes</a></li><li><a href="global.html#generateSidebarHTML">generateSidebarHTML</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getAllTabs">getAllTabs</a></li><li><a href="global.html#getNameColor">getNameColor</a></li><li><a href="global.html#getNameColorRGB">getNameColorRGB</a></li><li><a href="global.html#getOs">getOs</a></li><li><a href="global.html#getPersistantData">getPersistantData</a></li><li><a href="global.html#GetSelectedText">GetSelectedText</a></li><li><a href="global.html#getSessionID">getSessionID</a></li><li><a href="global.html#gotMessage">gotMessage</a></li><li><a href="global.html#guid">guid</a></li><li><a href="global.html#handleSocketMessage">handleSocketMessage</a></li><li><a href="global.html#handleTabUpdate">handleTabUpdate</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initSiteCommentBox">initSiteCommentBox</a></li><li><a href="global.html#isThisATouchDevice">isThisATouchDevice</a></li><li><a href="global.html#join">join</a></li><li><a href="global.html#joinProject">joinProject</a></li><li><a href="global.html#jump">jump</a></li><li><a href="global.html#leaveGroup">leaveGroup</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#loginBlockIsVisible">loginBlockIsVisible</a></li><li><a href="global.html#loginscanner">loginscanner</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#openCommentBox">openCommentBox</a></li><li><a href="global.html#post">post</a></li><li><a href="global.html#prepareAddNoteAndSend">prepareAddNoteAndSend</a></li><li><a href="global.html#processLoginResult">processLoginResult</a></li><li><a href="global.html#processNotes">processNotes</a></li><li><a href="global.html#processResult">processResult</a></li><li><a href="global.html#put">put</a></li><li><a href="global.html#reDrawAll">reDrawAll</a></li><li><a href="global.html#redrawAllSiteCommentBoxes">redrawAllSiteCommentBoxes</a></li><li><a href="global.html#register">register</a></li><li><a href="global.html#removeAllADDCommentBoxes">removeAllADDCommentBoxes</a></li><li><a href="global.html#removeAllHighlights">removeAllHighlights</a></li><li><a href="global.html#removeComment">removeComment</a></li><li><a href="global.html#removeCommentFromSiteCommentBox">removeCommentFromSiteCommentBox</a></li><li><a href="global.html#resetNotes">resetNotes</a></li><li><a href="global.html#sendMessageToBackend">sendMessageToBackend</a></li><li><a href="global.html#sendMessageToSidebar">sendMessageToSidebar</a></li><li><a href="global.html#sendMessageToTabs">sendMessageToTabs</a></li><li><a href="global.html#sendNewNotesToWebsite">sendNewNotesToWebsite</a></li><li><a href="global.html#sendNewTabs">sendNewTabs</a></li><li><a href="global.html#setBrowserTabUrl">setBrowserTabUrl</a></li><li><a href="global.html#setGroupNameHtml">setGroupNameHtml</a></li><li><a href="global.html#setHub">setHub</a></li><li><a href="global.html#setPersistantData">setPersistantData</a></li><li><a href="global.html#setupSockets">setupSockets</a></li><li><a href="global.html#showAllGroups">showAllGroups</a></li><li><a href="global.html#showComment">showComment</a></li><li><a href="global.html#showPanel">showPanel</a></li><li><a href="global.html#socketsAddWebsiteProposal">socketsAddWebsiteProposal</a></li><li><a href="global.html#socketsDeleteWebsiteProposal">socketsDeleteWebsiteProposal</a></li><li><a href="global.html#socketsLeave">socketsLeave</a></li><li><a href="global.html#startLoginVideoStream">startLoginVideoStream</a></li><li><a href="global.html#startVideoStream">startVideoStream</a></li><li><a href="global.html#stopLoginStream">stopLoginStream</a></li><li><a href="global.html#stopStream">stopStream</a></li><li><a href="global.html#tabClickHelper">tabClickHelper</a></li><li><a href="global.html#tabFavClickHelper">tabFavClickHelper</a></li><li><a href="global.html#tabUnFavClickHelper">tabUnFavClickHelper</a></li><li><a href="global.html#textNodesUnder">textNodesUnder</a></li><li><a href="global.html#updateGroupNameHtml">updateGroupNameHtml</a></li><li><a href="global.html#updateQRCode">updateQRCode</a></li><li><a href="global.html#updateRegisterQRCode">updateRegisterQRCode</a></li><li><a href="global.html#updateSiteCommentNumber">updateSiteCommentNumber</a></li><li><a href="global.html#updateUserNameHtml">updateUserNameHtml</a></li><li><a href="global.html#uuidv4">uuidv4</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Jul 15 2019 16:48:54 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

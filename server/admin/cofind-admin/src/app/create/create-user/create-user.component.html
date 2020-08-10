@@ -1,0 +1,17 @@
+<div id="createSuccess" class="alert alert-success">
+  <strong>Success!</strong> User was successfully created.
+</div>
+
+<div id="createWarning" class="alert alert-warning">
+  <strong>Warning!</strong> Could not create user.
+</div>
+
+<div class="form-group">
+  <label for="username">username:</label>
+  <input type="text" class="form-control" id="username">
+</div>
+<div class="form-group">
+  <label for="password">password:</label>
+  <input type="password" class="form-control" id="password">
+</div>
+<button id="submitUser" type="button" class="btn btn-default" (click)="submitUser()">Create User</button>

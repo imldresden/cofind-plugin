@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <title id="title">CoFind-Details</title>
+        <link rel="stylesheet" href="../css/detailpage.css">
+        <meta charset="utf-8">
+        <!--<meta http-equiv="refresh" content="10">-->
+</head>
+
+<body>
+        <div id="buttons">
+          <button disabled>Details</button>
+          <button><a id="btnCategory" href="./detailpageCategory.html">Category Details</a></button>
+          <button><a id="btnArchiv" href="./detailpageArchiv.html">Archive Details</a></button>
+        </div>
+        <p class="title" id="favoriteTitle">Favorites</p>
+        <div id="favorite" href="#favorite"></div>
+
+
+        <p class="title" id="activityTitle">Activity</p>
+        <div id="activityPage" href="#activity"></div>
+
+          <p class="title" id="privateTitle">Private</p>
+        <div id="private" href="#private">
+          </div>
+
+        <canvas id="canvas"></canvas>
+        <script src="../js/controller/serverController.js"></script>
+        <script src="../js/handler/httpHandler.js"></script>
+        <script src="../js/handler/localStorageHandler.js"></script>
+
+        <script src="../js/detailpage/detailpage.js"></script>
+
+
+</body>
+
+</html>

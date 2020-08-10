@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: backgroundSocketsHandler.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: backgroundSocketsHandler.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Author: Lucas Vogel
+ * 
+ * This file runs asynchronously in the background 
+ * of the browser and is only instanced once.
+ * This file sets up the sockes and handles all socket events that are independent from messages.
+ */
+
+
+var socket = null;
+
+/**
+ * sets up the Socket connection for the extension.
+ */
+async function setupSockets() {
+    if (server != undefined &amp;&amp; server != null &amp;&amp; server != "") {
+        if (socket == undefined || socket == null) {
+            socket = io(server);
+            var groupID = await getPersistantData("groupID");
+            // get a extensive group object
+            socket.emit('join', groupID); //Instance joins the group via socket
+            browser.notifications.create({
+                "type": "basic",
+                "title": "CoFind",
+                "message": `Socket server connected to ${server}`
+            });
+
+            socket.on('group modified', function (group) { //is Fired if there is a new version of data available
+                sendNewNotesToWebsite(group);
+                var message = {
+                    type: "socket group modified",
+                    data: {
+                        group: group
+                    }
+                }
+                sendMessageToSidebar(message);
+            });
+        }
+
+    }
+
+}
+
+/**
+ * Queries all tabs and returns them in a "array of objects"-Format. 
+ * It also ignores all internal tabs, like "about:" or "file:"
+ * @returns promise that will resolve to a array of tab-objects
+ */
+async function getAllTabs() {
+    var TabObjectsArray = [];
+    return new Promise(async function (resolve, reject) {
+        var tabs = await browser.tabs.query({});
+        for (tab of tabs) {
+            if (!tab.url.startsWith("about:") &amp;&amp; !tab.url.startsWith("moz-") &amp;&amp; !tab.url.startsWith("file:///")) {
+                var tabObject = {
+                    number: tab.id,
+                    url: tab.url,
+                    title: tab.title
+                }
+                TabObjectsArray.push(tabObject);
+            }
+        }
+        resolve(TabObjectsArray);
+    });
+}
+
+/**
+ * gets fired if there is a update to a tab
+ */
+async function handleTabUpdate() {
+    var tabs = await getAllTabs();
+    if (tabs != undefined &amp;&amp; tabs.length > 0) {
+        var sessionID = await getPersistantData("sessionID");
+        if (sessionID != undefined &amp;&amp; sessionID != null &amp;&amp; sessionID != "") {
+            sendNewTabs(tabs);
+        }
+    }
+}
+browser.tabs.onUpdated.addListener(() => {
+    handleTabUpdate();
+});
+browser.tabs.onActivated.addListener(() => {
+    handleTabUpdate();
+});
+
+/**
+ * Sends the given tabs via socket
+ * @param {*} tabs array of tab-objects
+ */
+async function sendNewTabs(tabs) {
+    var sessionID = await getSessionID();
+    var groupID = await getPersistantData("groupID");
+    var payload = {
+        session: sessionID,
+        tabs: tabs
+    }
+    if (socket != undefined &amp;&amp; socket != null) {
+        socket.emit('tabgroup added', groupID, payload);
+    }
+}
+
+/**
+ * Gets the current sessionID from persistant storage.
+ * @returns promise, that will resolve to the session-id. Otherwise false.
+ */
+async function getSessionID() {
+    return new Promise(async function (resolve, reject) {
+        var id = getPersistantData("sessionID");
+        if (id != undefined &amp;&amp; id != null &amp;&amp; id != "" &amp;&amp; id != "null" &amp;&amp; id != false) {
+            resolve(id);
+        } else {
+            resolve(false);
+        }
+    });
+
+}
+
+/**
+ * If a comment (note) is added to a website, 
+ * this function helps in preparing and sending  
+ * the neccessary data from the note to the socket.
+ * 
+ * @param {*} data data of the note
+ * @returns promise that resolves to true, if the message was sent successfully.
+ */
+async function prepareAddNoteAndSend(data) {
+    return new Promise(async function (resolve, reject) {
+        var userID = await getPersistantData("userID");
+        var groupID = await getPersistantData("groupID");
+        var note = data.data;
+        let requestNote = {
+            user: userID,
+            notePosition:
+            {
+                startElementOffsetOfSameType: note.startElementOffsetOfSameType,
+                startElementType: note.startElementType,
+                startElementInnerOffset: note.startElementInnerOffset,
+                startElementInnerText: note.startElementInnerText,
+                endElementOffsetOfSameType: note.endElementOffsetOfSameType,
+                endElementType: note.endElementType,
+                endElementInnerOffset: note.endElementInnerOffset,
+                endElementInnerText: note.endElementInnerText
+            },
+            description: data.text
+        };
+        let requestWebsiteProposalWithNote = {
+            group: groupID,
+            user: userID,
+            link: data.url,
+            title: data.title,
+            notes: [requestNote]
+        };
+        if (socket != undefined &amp;&amp; socket != null) {
+            socket.emit('websiteproposal added', groupID, requestWebsiteProposalWithNote);
+            resolve(true);
+        } else {
+            resolve(false);
+        }
+    });
+
+
+}
+/**
+ * Sends Notes to Website, It also prepares the notes to a format that can be used by the website script.
+ * @param {*} group the current group object it is provided by the socket
+ */
+async function sendNewNotesToWebsite(group) {
+    var currentUserID = await getPersistantData("userID");
+    var currentUserName = null;
+    var persistantUserName = await getPersistantData("userName");
+    if (persistantUserName == undefined || persistantUserName == null || persistantUserName == "") {
+        if (currentUserID != undefined) {
+            var url = server + "/users/" + currentUserID;
+            var result = await get(url);
+            if (result != undefined &amp;&amp; result != null) {
+                currentUserName = result.username;
+                setPersistantData("userName", currentUserName);
+            }
+        }
+    } else {
+        currentUserName = persistantUserName;
+    }
+    if (group.hasOwnProperty("websiteProposals")) {
+        var proposals = group.websiteProposals;
+        var resultData = [];
+        for (proposal of proposals) {
+            var proposalurl = proposal.link
+            if (proposal.hasOwnProperty("notes")) {
+                if (proposal.notes.length > 0) {
+                    for (note of proposal.notes) {
+                        var isCurrentUser = false;
+                        if (currentUserID != undefined &amp;&amp; note.user._id == currentUserID) {
+                            isCurrentUser = true;
+                        }
+                        if (note.isDeleted == false) {
+                            var noteData = {
+                                commentID: note._id,
+                                endElementInnerOffset: note.notePosition.endElementInnerOffset,
+                                endElementInnerText: note.notePosition.endElementInnerText,
+                                endElementOffsetOfSameType: note.notePosition.endElementOffsetOfSameType,
+                                endElementType: note.notePosition.endElementType,
+                                startElementInnerOffset: note.notePosition.startElementInnerOffset,
+                                startElementInnerText: note.notePosition.startElementInnerText,
+                                startElementOffsetOfSameType: note.notePosition.startElementOffsetOfSameType,
+                                startElementType: note.notePosition.startElementType,
+                                text: note.description,
+                                url: proposalurl,
+                                userID: note.user._id,
+                                userName: note.user.username,
+                                isCurrentUser: isCurrentUser
+                            }
+
+                            resultData.push(noteData);
+                        }
+                    }
+                }
+            }
+        }
+        var message = {
+            type: "notes",
+            data: {
+                notes: resultData,
+                currentUserId: currentUserID,
+                currentUserName: currentUserName
+            }
+
+        }
+        sendMessageToTabs(message);
+    }
+}
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#aCommentIsOpen">aCommentIsOpen</a></li><li><a href="global.html#addCommentBox">addCommentBox</a></li><li><a href="global.html#addCommentToSiteCommentBox">addCommentToSiteCommentBox</a></li><li><a href="global.html#appendReadyCommentBox">appendReadyCommentBox</a></li><li><a href="global.html#backToStart">backToStart</a></li><li><a href="global.html#checkIfUrlIsAlredyOpen">checkIfUrlIsAlredyOpen</a></li><li><a href="global.html#checkServer">checkServer</a></li><li><a href="global.html#checkServerPersistantData">checkServerPersistantData</a></li><li><a href="global.html#checkStorageChange">checkStorageChange</a></li><li><a href="global.html#closeCommentBox">closeCommentBox</a></li><li><a href="global.html#deleteAccount">deleteAccount</a></li><li><a href="global.html#deleteCommentButtonAction">deleteCommentButtonAction</a></li><li><a href="global.html#deleteGroup">deleteGroup</a></li><li><a href="global.html#deleteIt">deleteIt</a></li><li><a href="global.html#emptyFavoritesBox">emptyFavoritesBox</a></li><li><a href="global.html#emptySidebarContent">emptySidebarContent</a></li><li><a href="global.html#findAndHighlightText">findAndHighlightText</a></li><li><a href="global.html#firstSocketRefresh">firstSocketRefresh</a></li><li><a href="global.html#fullSiteNodeSearch">fullSiteNodeSearch</a></li><li><a href="global.html#generateFavoritesBoxes">generateFavoritesBoxes</a></li><li><a href="global.html#generateSidebarHTML">generateSidebarHTML</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getAllTabs">getAllTabs</a></li><li><a href="global.html#getNameColor">getNameColor</a></li><li><a href="global.html#getNameColorRGB">getNameColorRGB</a></li><li><a href="global.html#getOs">getOs</a></li><li><a href="global.html#getPersistantData">getPersistantData</a></li><li><a href="global.html#GetSelectedText">GetSelectedText</a></li><li><a href="global.html#getSessionID">getSessionID</a></li><li><a href="global.html#gotMessage">gotMessage</a></li><li><a href="global.html#guid">guid</a></li><li><a href="global.html#handleSocketMessage">handleSocketMessage</a></li><li><a href="global.html#handleTabUpdate">handleTabUpdate</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initSiteCommentBox">initSiteCommentBox</a></li><li><a href="global.html#isThisATouchDevice">isThisATouchDevice</a></li><li><a href="global.html#join">join</a></li><li><a href="global.html#joinProject">joinProject</a></li><li><a href="global.html#jump">jump</a></li><li><a href="global.html#leaveGroup">leaveGroup</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#loginBlockIsVisible">loginBlockIsVisible</a></li><li><a href="global.html#loginscanner">loginscanner</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#openCommentBox">openCommentBox</a></li><li><a href="global.html#post">post</a></li><li><a href="global.html#prepareAddNoteAndSend">prepareAddNoteAndSend</a></li><li><a href="global.html#processLoginResult">processLoginResult</a></li><li><a href="global.html#processNotes">processNotes</a></li><li><a href="global.html#processResult">processResult</a></li><li><a href="global.html#put">put</a></li><li><a href="global.html#reDrawAll">reDrawAll</a></li><li><a href="global.html#redrawAllSiteCommentBoxes">redrawAllSiteCommentBoxes</a></li><li><a href="global.html#register">register</a></li><li><a href="global.html#removeAllADDCommentBoxes">removeAllADDCommentBoxes</a></li><li><a href="global.html#removeAllHighlights">removeAllHighlights</a></li><li><a href="global.html#removeComment">removeComment</a></li><li><a href="global.html#removeCommentFromSiteCommentBox">removeCommentFromSiteCommentBox</a></li><li><a href="global.html#resetNotes">resetNotes</a></li><li><a href="global.html#sendMessageToBackend">sendMessageToBackend</a></li><li><a href="global.html#sendMessageToSidebar">sendMessageToSidebar</a></li><li><a href="global.html#sendMessageToTabs">sendMessageToTabs</a></li><li><a href="global.html#sendNewNotesToWebsite">sendNewNotesToWebsite</a></li><li><a href="global.html#sendNewTabs">sendNewTabs</a></li><li><a href="global.html#setBrowserTabUrl">setBrowserTabUrl</a></li><li><a href="global.html#setGroupNameHtml">setGroupNameHtml</a></li><li><a href="global.html#setHub">setHub</a></li><li><a href="global.html#setPersistantData">setPersistantData</a></li><li><a href="global.html#setupSockets">setupSockets</a></li><li><a href="global.html#showAllGroups">showAllGroups</a></li><li><a href="global.html#showComment">showComment</a></li><li><a href="global.html#showPanel">showPanel</a></li><li><a href="global.html#socketsAddWebsiteProposal">socketsAddWebsiteProposal</a></li><li><a href="global.html#socketsDeleteWebsiteProposal">socketsDeleteWebsiteProposal</a></li><li><a href="global.html#socketsLeave">socketsLeave</a></li><li><a href="global.html#startLoginVideoStream">startLoginVideoStream</a></li><li><a href="global.html#startVideoStream">startVideoStream</a></li><li><a href="global.html#stopLoginStream">stopLoginStream</a></li><li><a href="global.html#stopStream">stopStream</a></li><li><a href="global.html#tabClickHelper">tabClickHelper</a></li><li><a href="global.html#tabFavClickHelper">tabFavClickHelper</a></li><li><a href="global.html#tabUnFavClickHelper">tabUnFavClickHelper</a></li><li><a href="global.html#textNodesUnder">textNodesUnder</a></li><li><a href="global.html#updateGroupNameHtml">updateGroupNameHtml</a></li><li><a href="global.html#updateQRCode">updateQRCode</a></li><li><a href="global.html#updateRegisterQRCode">updateRegisterQRCode</a></li><li><a href="global.html#updateSiteCommentNumber">updateSiteCommentNumber</a></li><li><a href="global.html#updateUserNameHtml">updateUserNameHtml</a></li><li><a href="global.html#uuidv4">uuidv4</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Jul 15 2019 16:48:54 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

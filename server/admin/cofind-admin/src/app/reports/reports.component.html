@@ -1,0 +1,145 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" [routerLink]="['']">CoFind Administration Panel</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
+          aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" [routerLink]="['']">Home <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" [routerLink]="['/reports']">Reports</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [routerLink]="['/create']">Create</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [routerLink]="['/modify']">Modify</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<!--<div class="container">-->
+  <!--<div class="row">-->
+    <!--<div class="col">-->
+      <!--<button type="button" class="btn btn-secondary btn-lg" (click)="loadGroups()">Load Groups</button>-->
+    <!--</div>-->
+  <!--</div>-->
+<!--</div>-->
+
+
+<table class="table table-hover table-dark">
+  <thead>
+  <tr>
+    <th scope="col">Nr</th>
+    <th scope="col">Id</th>
+    <th scope="col">Name</th>
+    <th scope="col">Description</th>
+    <th scope="col">Creator</th>
+    <th scope="col">CreatedAt</th>
+    <th scope="col">Download</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let group of groups; index as i">
+    <th scope="row">{{i}}</th>
+    <td>{{group._id}}</td>
+    <td>{{group.name}}</td>
+    <td>{{group.description}}</td>
+    <td>{{group.user}}</td>
+    <td>{{group.createdAt}}</td>
+    <td class="download-json">
+      <div class="img-container">
+      <img src="./assets/icons/baseline_cloud_download_white_18dp.png" alt="download" class="icon-button">
+      <img src="./assets/icons/baseline_cloud_download_white_18dp_g.png" alt="download" class="icon-background"
+           (click)="exportGroupDyId(group._id)">
+      </div>
+    </td>
+  </tr>
+
+  </tbody>
+</table>
+
+
+<!--
+<div class="accordion" id="groupAccordion">
+
+  <div class="card">
+    <div class="card-header" id="heading">
+      <h5 class="mb-0">
+        <button class="btn btn-link" type="button" data-toggle="collapse dispose" attr.data-target="#collapseHeader"
+                aria-expanded="false" attr.aria-controls="collapseHeader">
+          <div class="container">
+            <div class="row">
+              <div class="col-md-1">
+                Nr.
+              </div>
+              <div class="col-md-3">
+                Id
+              </div>
+              <div class="col-md-1">
+                Name
+              </div>
+              <div class="col-md-2">
+                Description
+              </div>
+              <div class="col-md-3">
+                Creator
+              </div>
+              <div class="col-md-2">
+                CreatedAt
+              </div>
+            </div>
+          </div>
+        </button>
+      </h5>
+    </div>
+
+    <div id="collapseHeader" class="collapse" attr.aria-labelledby="heading" data-parent="#groupAccordion">
+      <div class="card-body">
+      </div>
+    </div>
+  </div>
+
+  <div class="card" *ngFor="let group of groups; index as i">
+    <div class="card-header" id="heading{{i}}">
+      <h5 class="mb-0">
+        <button class="btn btn-link" type="button" data-toggle="collapse" attr.data-target="#collapse{{i}}"
+                aria-expanded="false" attr.aria-controls="collapse{{i}}">
+          <div class="container">
+            <div class="row">
+              <div class="col-md-1">
+                {{i}}
+              </div>
+              <div class="col-md-3">
+                {{group._id}}
+              </div>
+              <div class="col-md-1">
+                {{group.name}}
+              </div>
+              <div class="col-md-2">
+                {{group.description}}
+              </div>
+              <div class="col-md-3">
+                {{group.user}}
+              </div>
+              <div class="col-md-2">
+                {{group.createdAt}}
+              </div>
+            </div>
+          </div>
+        </button>
+      </h5>
+    </div>
+
+    <div id="collapse{{i}}" class="collapse" attr.aria-labelledby="heading{{i}}" data-parent="#groupAccordion">
+      <div class="card-body">
+        {{i}} - {{group.description}}
+      </div>
+    </div>
+  </div>
+</div>
+-->

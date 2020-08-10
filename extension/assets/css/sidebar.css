@@ -1,0 +1,604 @@
+/**
+ * Author: Lucas Vogel, Hanna Blochwit
+ */
+html,body{
+    min-width: 240px;
+    font-family: Arial, Helvetica, sans-serif;
+    padding:0px;
+    margin:0px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+	  overflow-y: hidden;
+}
+
+html{
+    border:0px solid grey;
+    border-right-width: 1px;
+    min-height:100vh;
+    overflow-x: hidden;
+}
+
+.hidden {
+    display: none;
+}
+
+#sidebar{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: minmax(100px, auto);
+  height: 100vh;
+}
+
+.leftSidebar{
+  float: left;
+  width: 85vw;
+  grid-column: 1;
+  border-right: 1px solid grey;
+}
+
+#rightSidebar{
+  width: 15vw;
+  grid-column: 2;
+  /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,ffffff+100&1+25,0.76+56 */
+  background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 25%,rgba(255,255,255,0.76) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#c2ffffff',GradientType=0 ); /* IE6-9 */
+}
+
+#loginBox{
+    /*position: absolute;*/
+    /*width: 100%;*/
+    /*height: 100%;*/
+    /*margin: 0px;*/
+    /*box-sizing: border-box;*/
+    /*padding: 2rem;*/
+    padding-top: 45vh;
+    /*background-color: white;*/
+    text-align: center;
+    /*z-index: 9999999;*/
+}
+
+section{
+  padding: 0px;
+  margin: 0px;
+  /*border-left-width: 1rem;*/
+  /*border-left-style: solid;
+  border-left-color: grey;
+  border-top-width: 0px;*/
+}
+
+section div{
+    /*width: 30px; !* <- hat u.a. damit zu tun*!*/
+    /*padding: 4px;*/
+    /*padding-bottom: 0px;*/
+    overflow: hidden;
+}
+
+section div span {
+    color: rgb(0, 0, 97);
+    width: 100%;
+    float:left;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 60%;
+    line-height:20px;
+}
+section div i {
+    font-style: normal;
+
+}
+section p{
+    padding-top: 0px;
+    margin-top: 0px;
+    margin-left: 0.6rem;
+    margin-bottom: 0px;
+    font-size: 1.4rem;
+}
+
+/***Dropdown***/
+
+.dropdown {
+  float: left;
+  overflow: hidden;
+  width: 85vw;
+  height: 4vh;
+  background-color: lightgrey;
+  margin: 1px;
+}
+
+.dropdown:hover button{
+    background:lightgrey;
+}
+
+.dropdown .dropbtn {
+  width: 80vw;
+  height: 4vh;
+  cursor: pointer;
+  font-size: 1.2rem;
+  border: none;
+  outline: none;
+  color: black;
+  padding: 2px 3px;
+  padding-left: 10px;
+  margin: 0;
+}
+
+.arrow{
+  cursor: pointer;
+  width: 4vw;
+  float:right;
+  color: black;
+  font-size: 16px;
+  margin-top: 0px;
+  text-align: center;
+  padding-top: initial; /*auto; not valid*/
+  padding-bottom: initial; /*auto; not valid*/
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: white;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  margin-left: 1px;
+}
+
+.show {
+  display: block;
+}
+
+
+/***UserButtons***/
+
+#coFindUserButtons{
+  display:flex;
+  /*top: 0px;
+  right: 140px;
+  position: fixed;*/
+}
+
+.coFindUserButton{
+  flex: 0 0 21vw;
+  /*border: 2px solid black;*/
+  height: 4vh;
+}
+.coFindUserButtonBox{
+    display:block;
+    width:100%;
+    height: 100%;
+    color: black;
+    background-color: rgba(136,136,136,0.5);
+    border: 2px solid rgba(136,136,136,0.7);
+    opacity: 0.7;
+    text-align: center;
+    line-height: 3.5vh;
+    font-size: 15px;
+    float: right;
+    cursor: pointer;
+}
+
+.coFindUserButtonBox:hover {
+  background-color: #ddd;
+}
+
+/***Favorite Section***/
+
+#proposals{
+  	height: 28vh;
+  	width: 100%;
+    /*margin-top: -10px;*/
+    margin: 0px;
+    padding: 0px;
+    background-color: rgba(193, 193, 193, 0.4);
+
+  }
+
+.proposalSection{
+  height: 24vh;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+  .sectionProposals {
+      font-size: 1.3rem;
+      margin: 0px;
+      padding: 2px;
+      padding-left: 10px;
+      background-color: rgb(193, 193, 193);
+      border-top: 1px solid grey;
+  }
+
+  .sectionProposals a{
+    float: right;
+    height: calc(100% - 4px);
+    color:black;
+    -moz-appearance: button;
+    -webkit-appearance: button;
+    background-color:#D5D4D4;
+    border: 1px solid grey;
+    padding-left: 2px;
+    padding-right: 2px;
+    padding: 2px;
+    line-height: 95%;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    max-width: 100px;
+    margin: 0px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    margin-right: 20px;
+  }
+
+.favContainer{
+    position: absolute;
+    right:0px;
+    width:5%;
+    min-width: 30px;
+    text-align: center;
+    padding:0px;
+    box-sizing: border-box;
+    padding-top:14px;
+    margin:0px;
+    bottom: 0px;
+    z-index: 9999;
+    top:0%;
+    border:0px solid lightgrey;
+    border-bottom-color: grey;
+    border-left-width: thin;
+    color:lightgrey;
+    background:white;
+}
+
+.numberPropsalsContainer{
+    /*display:block;*/
+    /*vertical-align: top;*/
+    position: absolute;
+    width: 14px;
+    height:14px;
+    font-size: 9px;
+    background-color: red;
+    line-height: 14px;
+    text-align: center;
+    padding:0px;
+    margin:0px;
+    margin-left: 20px;
+    margin-top: -2px;
+    border-radius: 7px;
+    color:white;
+    z-index: 0;
+}
+
+.panelSection, .panelFavSection{
+  width: 85vw;
+  height: 1.9rem;
+  border-top: 1px solid grey;
+}
+
+/***Activity Section***/
+
+#activity{
+  	height: 68vh;
+    background-color: rgba(193, 193, 193, 0.4);
+}
+
+.sectionActivity{
+  height: 13vh;
+  overflow-y: scroll;
+  overflow-x: hidden;
+
+}
+
+.userPanel{
+    height: 17vh;
+    padding: 0px;
+    margin: 0px;
+  	overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+.sectionUsername {
+    font-size: 1.2rem;
+    margin: 0px;
+    padding: 2px;
+    padding-left: 10px;
+    border-top: 1px solid grey;
+  }
+
+.sectionUsername a{
+    float: right;
+    height: calc(100% - 4px);
+    color:black;
+    -moz-appearance: button;
+    -webkit-appearance: button;
+    background-color:#D5D4D4;
+    border: 1px solid grey;
+    padding-left: 2px;
+    padding-right: 2px;
+    padding: 2px;
+    line-height: 95%;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    max-width: 100px;
+    margin: 0px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    margin-right: 20px;
+}
+
+/***Private Section***/
+.privateSection {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  height: 12.5vh;
+}
+
+#private{
+  height: 16.5vh;
+  width: 85%;
+	position: absolute;
+	bottom: 0;
+}
+
+.privatePanel{
+  padding: 0px;
+  margin: 0px;
+}
+
+.sectionSession {
+    font-size: 1rem;
+    padding: 2px;
+    margin-bottom: -13px;
+    margin-top: 2px;
+}
+
+/***addTabs***/
+.tab{
+	  float: left;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    border: 3px solid #bbbbbb;
+    transition: all 0.3s;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    position: relative;
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,ffffff+100&1+25,0.76+56 */
+background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 25%,rgba(255,255,255,0.76) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#c2ffffff',GradientType=0 ); /* IE6-9 */
+}
+
+.tab img{
+     padding: 4px;
+}
+
+/***For Large Displays***/
+@media (device-width:1920px) {
+  .proposalSection{
+    height: 25vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+
+  #sectionActivity{
+    height: 14vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+
+  }
+
+  #privateSection {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    height: 12vh;
+  }
+}
+@media (min-device-width:2000px) {
+  .proposalSection{
+    height: 26vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+
+  #sectionActivity{
+    height: 15vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+
+  }
+
+  #privateSection {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    height: 13vh;
+  }
+}
+/***Tooltip***/
+.tooltipText {
+  all: unset;
+  overflow: hidden;
+  max-width: 65vw;
+  margin:4px;
+  margin-top: -43px;
+  margin-left: -30px;
+  padding:5px;
+  border:1px solid #EEEEEE;
+  border-radius: 3px;
+  white-space: nowrap;
+	transform-style: preserve-3d;
+  z-index: 999999;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  box-shadow: 2px 2px 10px 5px rgba(0,0,0,0.31);
+  visibility: hidden;
+  /* Position the tooltip */
+  position: absolute;
+  /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,ffffff+100&1+25,0.76+56 */
+  background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 25%,rgba(255,255,255,0.76) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#c2ffffff',GradientType=0 ); /* IE6-9 */
+}
+
+.tabBox:hover .tooltipText {
+  visibility: visible;
+}
+
+#proposals .tabBox{
+    display: inline-block;
+    width: auto;
+    margin: 0px;
+    margin-left: 3px;
+    margin-top: 3px;
+    padding: 0px;
+
+  }
+#proposals .currentTab{
+    display: inline-block;
+    width: auto;
+    margin: 0px;
+    margin-bottom: -4px;
+    padding-bottom: 5px;
+  }
+
+.userPanel .tabBox{
+  display: inline-block;
+  width: auto;
+  margin: 0px;
+  margin-left: 4px;
+  margin-top: 4px;
+  padding: 0px;
+}
+
+.privatePanel .tabBox{
+  display: inline-block;
+  width: auto;
+  margin: 0px;
+  margin-left: 4px;
+  margin-top: 4px;
+  padding: 0px;
+}
+
+.privatePanel .currentTab{
+    display: inline-block;
+    width: auto;
+    margin: 0px;
+    margin-bottom: -3px;
+    padding-bottom: 5px;
+  }
+
+.url{
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: navy;
+  width: 100%;
+  font-size: 0.8rem;
+  margin-left: 0px;
+}
+
+/****appendButtons****/
+#coFindProposalBtn{
+    all: initial;
+    -moz-user-select:none;
+    width: 15vw;
+    height:40px;
+    opacity: 0.8;
+    position: fixed;
+    display:inline-block;
+    border-radius: 10px;
+    margin:0px;
+    padding:0px;
+    background-color:white;
+    bottom: 2px;
+
+    text-align: center;
+    line-height: 44px;
+    font-size: 20px;
+    float: right;
+    cursor: pointer;
+
+    font-family:Arial, Helvetica, sans-serif;
+    box-shadow: 6px 8px 30px 5px rgba(0,0,0,0.31);
+    overflow: hidden;
+
+    transition:all ease 0.3s;
+    /*z-index: 999999999;*/
+}
+
+#coFindExplicitBtn{
+  all: initial;
+  -moz-user-select:none;
+  width: 15vw;
+  height:40px;
+  opacity: 0.8;
+  position: fixed;
+  display:inline-block;
+  border-radius: 10px;
+  margin:0px;
+  padding:0px;
+  background-color: #888;
+  bottom: 47px;
+
+  text-align: center;
+  line-height: 44px;
+  font-size: 15px;
+  float: right;
+  cursor: pointer;
+
+  font-family:Arial, Helvetica, sans-serif;
+  box-shadow: 6px 8px 30px 5px rgba(0,0,0,0.31);
+  overflow: hidden;
+
+  transition:all ease 0.3s;
+  /*z-index: 999999999;*/
+}
+
+/*#coFindExplicitBtn:active, #coFindExplicitBtn:focus{
+    background-color: #555;
+
+}*/
+#coFindSnapshotBtn{
+  all: initial;
+  -moz-user-select:none;
+  width: 15vw;
+  height:40px;
+  opacity: 0.8;
+  position: fixed;
+  display:inline-block;
+  border-radius: 10px;
+  margin:0px;
+  padding:0px;
+  background-color: #888;
+  bottom: 47px;
+
+  text-align: center;
+  line-height: 44px;
+  font-size: 15px;
+  float: right;
+  cursor: pointer;
+
+  font-family:Arial, Helvetica, sans-serif;
+  box-shadow: 6px 8px 30px 5px rgba(0,0,0,0.31);
+  overflow: hidden;
+
+  transition:all ease 0.3s;
+  /*z-index: 999999999;*/
+}
+
+#coFindSnapshotBtn:active, #coFindSnapshotBtn:focus{
+    background-color: #555;
+}
+
+#confirmText{
+  height: 100vh;
+  background-color: rgba(136,136,136,0.5);
+  text-align: center;
+  line-height: 44px;
+  font-size: 15px;
+  padding-top: 66vh;
+}

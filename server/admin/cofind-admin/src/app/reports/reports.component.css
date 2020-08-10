@@ -1,0 +1,19 @@
+.icon-button {
+  z-index: 10;
+}
+
+.img-container:hover .icon-background {
+  display: inline;
+}
+
+.navbar-brand {
+  color: #66ff66;
+}
+
+.icon-background {
+  cursor: pointer;
+  position: relative;
+  left: -36px;
+  display: none;
+  z-index: 1;
+}

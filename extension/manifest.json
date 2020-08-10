@@ -1,0 +1,65 @@
+{
+  "manifest_version": 2,
+  "name": "CoFind",
+  "version": "1.0",
+  "description": "A browser-extension that enables collaborative browsing.",
+  "icons": {
+    "48": "icons/icon-48.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "./assets/js/content/contentMessageHandler.js",
+        "./assets/js/content/contentEventListener.js"
+      ],
+      "css": [
+        "./assets/css/contentScript.css"
+      ]
+    }
+  ],
+  "background": {
+    "scripts": [
+      "./assets/js/socket.io.js",
+      "./assets/js/globalHelper.js",
+      "./assets/js/background/backgroundMessages/socketMessageHandler.js",
+      "./assets/js/background/backgroundMessages/socketLogMessageHandler.js",
+      "./assets/js/controller/serverController.js",
+      "./assets/js/controller/tabController.js",
+      "./assets/js/handler/localStorageHandler.js",
+      "./assets/js/background/backgroundSocketsHandler.js",
+      "./assets/js/background/backgroundMessageHandler.js",
+      "./assets/js/background/background.js",
+      "./assets/js/background/backgroundEventListener.js"
+    ]
+  },
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self';",
+  "browser_action": {
+    "default_icon": {
+      "48": "icons/icon-48.png"
+    },
+    "default_title": "Open Sidebar",
+    "default_popup": "assets/html/sidebar.html"
+  },
+  "permissions": [
+    "activeTab",
+    "browsingData",
+    "tabs",
+    "webNavigation",
+    "webRequest",
+    "notifications",
+    "storage"
+  ],
+  "sidebar_action": {
+    "default_title": "CoFind (v2020.02.20)",
+    "default_panel": "assets/html/sidebar.html",
+    "default_icon": "icons/icon-48.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "testapp@kpcofind.com"
+    }
+  }
+}

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: sidebarHelper.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: sidebarHelper.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Author: Lucas Vogel
+ * 
+ * This file is the helper file for the sidebar
+ */
+
+var loginBlockBox = document.getElementById("loginBox");
+
+/**
+ * generates a HEX Color for a given String
+ * @param {string} user the given String
+ * @returns string with hex-color  
+ */
+function getNameColor(user) {
+    var colorHash = new ColorHash();
+    var input = user;
+    var output = "";
+    var quer = 0;
+    for (var i = 0; i &lt; input.length; i++) {
+        var character = input[i];
+        var asciiValue = character.charCodeAt(0);
+        quer += asciiValue;
+        var newCharacterNumber = (asciiValue * asciiValue) % 125
+        var newCharacter = String.fromCharCode(newCharacterNumber);
+        for (var j = 0; j &lt; asciiValue; j++) {
+            quer += 1;
+            output += newCharacter
+        }
+    }
+    output = quer + input + output + input;
+    var color = colorHash.hex(output);
+    return color;
+}
+
+/**
+ * generates a RGB-Value for a given String
+ * @param {string} text input
+ * @returns string with r,g,b
+ */
+function getNameColorRGB(text) {
+    var colorHash = new ColorHash();
+    var input = text;
+    var output = "";
+    var quer = 0;
+    for (var i = 0; i &lt; input.length; i++) {
+        var character = input[i];
+        var asciiValue = character.charCodeAt(0);
+        quer += asciiValue;
+        var newCharacterNumber = (asciiValue * asciiValue) % 125
+        var newCharacter = String.fromCharCode(newCharacterNumber);
+        for (var j = 0; j &lt; asciiValue; j++) {
+            quer += 1;
+            output += newCharacter
+        }
+    }
+    output = quer + input + output + input;
+    rgbArray = colorHash.rgb(output);
+    result = rgbArray[0] + ", " + rgbArray[1] + ", " + rgbArray[2];
+    return result;
+
+}
+
+/**
+ * Sets the URL to a given Tab or in the current one.
+ * @param {String} newUrl Url to set in the Tab
+ * @param {Number} id optional. ID of the Tab. If not set, the current Tab is used.
+ */
+async function setBrowserTabUrl(newUrl, id = null) {
+    if (id == "" || id == null || id == undefined) {
+        var updating = browser.tabs.update(
+            { url: newUrl }
+        )
+    } else {
+        var updating = browser.tabs.update(
+            id,
+            { url: newUrl }
+        )
+    }
+}
+
+/** gets Called if the local Storage is changed */
+window.onstorage = function (e) {
+    checkStorageChange();
+};
+
+/**
+ * Gets called when the localStorage was changed, to update environment variables
+ */
+async function checkStorageChange() {
+    var serverIDfromStorage = await getPersistantData("server");
+    if (serverIDfromStorage != undefined &amp;&amp; serverIDfromStorage != null) {
+        server = serverIDfromStorage;
+    }
+    var user = await getPersistantData("userID");
+    var group = await getPersistantData("groupID");
+    if (user == undefined || group == undefined || user == null || group == null || user == "" || group == "") {
+        loginBlockIsVisible(true);
+        emptySidebarContent();
+    } else {
+        loginBlockIsVisible(false);
+        generateSidebarHTML();
+    }
+}
+
+/**
+ * Toggles the visibility of the white overlay if the current user is not logged into a group
+ * @param {Boolean} value true if the loginblock should be visible
+ */
+async function loginBlockIsVisible(value) {
+    if (value == true) {
+        loginBlockBox.classList = "";
+        updateUserNameHtml("");
+        updateGroupNameHtml("");
+        emptyFavoritesBox();
+
+
+    } else {
+        loginBlockBox.classList = "hidden";
+        updateQRCode();
+        updateUserNameHtml();
+        updateGroupNameHtml();
+    }
+}
+
+/**
+ * resets the sidebar content
+ */
+async function emptySidebarContent() {
+    var container = document.getElementById("content");
+    container.innerHTML = "";
+}
+
+
+/**
+ * Gets called when the user clicks on a tab in the sidebar. 
+ * Can be used in the future to jumpt to the tab if a site
+ * is already open. However, currently this API is not 
+ * implemented fully and is still experimental.
+ * After that, the function checkIfUrlIsAlredyOpen() can
+ * be used.
+ * @param {Event} event onclick event
+ */
+async function tabClickHelper(event) {
+    if (event.target != undefined &amp;&amp; event.target != null) {
+        if (event.target.className != undefined &amp;&amp; event.target.className != "favContainer" &amp;&amp; event.target.className != "favMarkedContainer") {
+            var url = event.target.getAttribute("data-url");
+            var creating = browser.tabs.create({
+                url: url
+            });
+        }
+    }
+}
+
+/**
+ * Can be used to check if a tab is already open with the given url
+ * @param {String} url Url to search for
+ * @returns promise that resolves to the tabnumber or false.
+ */
+async function checkIfUrlIsAlredyOpen(url) {
+    return new Promise(async function (resolve, reject) {
+        var allTabs = await getAllTabs();
+        for (tab in allTabs) {
+            if (tab.url == url) {
+                resolve(tab.number);
+                return;
+            }
+        }
+        resolve(false);
+    });
+}
+
+/**
+ * Adds a Tab to the favorites, after clicking the fav icon next to a open tab
+ * @param {Event} event Onclick event fromm the browser
+ */
+async function tabFavClickHelper(event) {
+    var url = event.target.getAttribute("data-url");
+    if (url == undefined || url == null || url == "") {
+        return;
+    }
+    var tabID = event.target.getAttribute("data-id");
+    if (tabID == undefined || tabID == null || tabID == "") {
+        return;
+    }
+    var titleID = "title-" + tabID;
+    var titleElement = document.getElementById(titleID);
+    if (titleElement == undefined) {
+        return;
+    }
+    var title = titleElement.innerHTML;
+    var groupID = await getPersistantData("groupID");
+    var user = await getPersistantData("userID");
+    let requestWebsiteProposal = {
+        group: groupID,
+        user: user,
+        link: url,
+        title: title
+    };
+    socketsAddWebsiteProposal(groupID, requestWebsiteProposal);
+}
+
+/**
+ * Removes a Favorite
+ * @param {Event} event onclick browser event
+ */
+async function tabUnFavClickHelper(event) {
+    var groupID = await getPersistantData("groupID");
+    if (groupID == undefined || groupID == null) {
+        return;
+    }
+    var proposalID = event.target.getAttribute("data-id");
+    if (proposalID != undefined &amp;&amp; proposalID != null &amp;&amp; proposalID != "") {
+        socketsDeleteWebsiteProposal(groupID, proposalID);
+    }
+}
+
+/**
+ * Updates the QR-Code from the sidebar so that other members can join the group
+ */
+async function updateQRCode() {
+    var qr = document.getElementById("qrCode");
+    if (qr != undefined) {
+        var groupID = await getPersistantData("groupID");
+        if (groupID != undefined &amp;&amp; groupID != null &amp;&amp; groupID != "") {
+            var value = "hub:" + groupID;
+            var url = `https://chart.googleapis.com/chart?cht=qr&amp;chl=${value}&amp;chs=300x300&amp;chld=L|0`;
+            qr.setAttribute("src", url);
+        }
+    }
+}
+
+/**
+ * Sets the username in the sidebar username box
+ * @param {String} text optional. Username
+ */
+async function updateUserNameHtml(text = null) {
+    var element = document.getElementById("userNameBox");
+    if (element != undefined) {
+        if (text != null) { //if the text is not default
+            element.innerHTML = text;
+            return;
+        }
+        var userID = await getPersistantData("userID");
+        if (userID != undefined) {
+            var url = server + "/users/" + userID;
+            var result = await get(url);
+            if (result != undefined &amp;&amp; result != null) {
+                element.innerHTML = result.username;
+            }
+        }
+    }
+}
+
+/**
+ * Updates the Group name in the sidebar groupname box
+ * @param {String} text optional. Group name
+ */
+async function updateGroupNameHtml(text = null) {
+    var element = document.getElementById("groupNameBox");
+    if (element != undefined) {
+        if (text != null) { //if the text is not default
+            element.innerHTML = text;
+            return;
+        }
+        var groupID = await getPersistantData("groupID");
+        if (groupID != undefined) {
+            var groupURL = server + "/groups/" + groupID + "/current";
+            var groupInfo = await get(groupURL);
+            var groupName = groupInfo.name;
+            if (groupName != undefined &amp;&amp; groupName != null &amp;&amp; groupName != "") {
+                element.innerHTML = groupName;
+            }
+        }
+    }
+}
+
+/**
+ * Resets the Favorites HTML 
+ */
+async function emptyFavoritesBox() {
+    var element = document.getElementById("favorites");
+    if (element != undefined) {
+        element.innerHTML = "";
+    }
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#aCommentIsOpen">aCommentIsOpen</a></li><li><a href="global.html#addCommentBox">addCommentBox</a></li><li><a href="global.html#addCommentToSiteCommentBox">addCommentToSiteCommentBox</a></li><li><a href="global.html#appendReadyCommentBox">appendReadyCommentBox</a></li><li><a href="global.html#backToStart">backToStart</a></li><li><a href="global.html#checkIfUrlIsAlredyOpen">checkIfUrlIsAlredyOpen</a></li><li><a href="global.html#checkServer">checkServer</a></li><li><a href="global.html#checkServerPersistantData">checkServerPersistantData</a></li><li><a href="global.html#checkStorageChange">checkStorageChange</a></li><li><a href="global.html#closeCommentBox">closeCommentBox</a></li><li><a href="global.html#deleteAccount">deleteAccount</a></li><li><a href="global.html#deleteCommentButtonAction">deleteCommentButtonAction</a></li><li><a href="global.html#deleteGroup">deleteGroup</a></li><li><a href="global.html#deleteIt">deleteIt</a></li><li><a href="global.html#emptyFavoritesBox">emptyFavoritesBox</a></li><li><a href="global.html#emptySidebarContent">emptySidebarContent</a></li><li><a href="global.html#findAndHighlightText">findAndHighlightText</a></li><li><a href="global.html#firstSocketRefresh">firstSocketRefresh</a></li><li><a href="global.html#fullSiteNodeSearch">fullSiteNodeSearch</a></li><li><a href="global.html#generateFavoritesBoxes">generateFavoritesBoxes</a></li><li><a href="global.html#generateSidebarHTML">generateSidebarHTML</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getAllTabs">getAllTabs</a></li><li><a href="global.html#getNameColor">getNameColor</a></li><li><a href="global.html#getNameColorRGB">getNameColorRGB</a></li><li><a href="global.html#getOs">getOs</a></li><li><a href="global.html#getPersistantData">getPersistantData</a></li><li><a href="global.html#GetSelectedText">GetSelectedText</a></li><li><a href="global.html#getSessionID">getSessionID</a></li><li><a href="global.html#gotMessage">gotMessage</a></li><li><a href="global.html#guid">guid</a></li><li><a href="global.html#handleSocketMessage">handleSocketMessage</a></li><li><a href="global.html#handleTabUpdate">handleTabUpdate</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initSiteCommentBox">initSiteCommentBox</a></li><li><a href="global.html#isThisATouchDevice">isThisATouchDevice</a></li><li><a href="global.html#join">join</a></li><li><a href="global.html#joinProject">joinProject</a></li><li><a href="global.html#jump">jump</a></li><li><a href="global.html#leaveGroup">leaveGroup</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#loginBlockIsVisible">loginBlockIsVisible</a></li><li><a href="global.html#loginscanner">loginscanner</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#openCommentBox">openCommentBox</a></li><li><a href="global.html#post">post</a></li><li><a href="global.html#prepareAddNoteAndSend">prepareAddNoteAndSend</a></li><li><a href="global.html#processLoginResult">processLoginResult</a></li><li><a href="global.html#processNotes">processNotes</a></li><li><a href="global.html#processResult">processResult</a></li><li><a href="global.html#put">put</a></li><li><a href="global.html#reDrawAll">reDrawAll</a></li><li><a href="global.html#redrawAllSiteCommentBoxes">redrawAllSiteCommentBoxes</a></li><li><a href="global.html#register">register</a></li><li><a href="global.html#removeAllADDCommentBoxes">removeAllADDCommentBoxes</a></li><li><a href="global.html#removeAllHighlights">removeAllHighlights</a></li><li><a href="global.html#removeComment">removeComment</a></li><li><a href="global.html#removeCommentFromSiteCommentBox">removeCommentFromSiteCommentBox</a></li><li><a href="global.html#resetNotes">resetNotes</a></li><li><a href="global.html#sendMessageToBackend">sendMessageToBackend</a></li><li><a href="global.html#sendMessageToSidebar">sendMessageToSidebar</a></li><li><a href="global.html#sendMessageToTabs">sendMessageToTabs</a></li><li><a href="global.html#sendNewNotesToWebsite">sendNewNotesToWebsite</a></li><li><a href="global.html#sendNewTabs">sendNewTabs</a></li><li><a href="global.html#setBrowserTabUrl">setBrowserTabUrl</a></li><li><a href="global.html#setGroupNameHtml">setGroupNameHtml</a></li><li><a href="global.html#setHub">setHub</a></li><li><a href="global.html#setPersistantData">setPersistantData</a></li><li><a href="global.html#setupSockets">setupSockets</a></li><li><a href="global.html#showAllGroups">showAllGroups</a></li><li><a href="global.html#showComment">showComment</a></li><li><a href="global.html#showPanel">showPanel</a></li><li><a href="global.html#socketsAddWebsiteProposal">socketsAddWebsiteProposal</a></li><li><a href="global.html#socketsDeleteWebsiteProposal">socketsDeleteWebsiteProposal</a></li><li><a href="global.html#socketsLeave">socketsLeave</a></li><li><a href="global.html#startLoginVideoStream">startLoginVideoStream</a></li><li><a href="global.html#startVideoStream">startVideoStream</a></li><li><a href="global.html#stopLoginStream">stopLoginStream</a></li><li><a href="global.html#stopStream">stopStream</a></li><li><a href="global.html#tabClickHelper">tabClickHelper</a></li><li><a href="global.html#tabFavClickHelper">tabFavClickHelper</a></li><li><a href="global.html#tabUnFavClickHelper">tabUnFavClickHelper</a></li><li><a href="global.html#textNodesUnder">textNodesUnder</a></li><li><a href="global.html#updateGroupNameHtml">updateGroupNameHtml</a></li><li><a href="global.html#updateQRCode">updateQRCode</a></li><li><a href="global.html#updateRegisterQRCode">updateRegisterQRCode</a></li><li><a href="global.html#updateSiteCommentNumber">updateSiteCommentNumber</a></li><li><a href="global.html#updateUserNameHtml">updateUserNameHtml</a></li><li><a href="global.html#uuidv4">uuidv4</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Jul 15 2019 16:48:54 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

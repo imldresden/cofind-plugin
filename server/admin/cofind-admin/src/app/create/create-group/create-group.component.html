@@ -1,0 +1,29 @@
+<div id="createSuccess" class="alert alert-success">
+  <strong>Success!</strong> Group was successfully created.
+</div>
+
+<div id="createWarning" class="alert alert-warning">
+  <strong>Warning!</strong> Could not create group.
+</div>
+
+<div class="form-group">
+  <label for="groupName">group name:</label>
+  <input type="text" class="form-control" id="groupName">
+</div>
+<div class="form-group">
+  <label for="description">description:</label>
+  <input type="text" class="form-control" id="description">
+</div>
+<div class="form-group">
+  <label for="selectOwner">owner:</label>
+  <select class="form-control" id="selectOwner">
+    <option *ngFor="let user of users">{{user.username}}</option>
+  </select>
+</div>
+<div class="form-group">
+  <label for="selectMode">ui mode:</label>
+  <select class="form-control" id="selectMode">
+    <option *ngFor="let mode of uiMode">{{mode}}</option>
+  </select>
+</div>
+<button id="submitGroup" type="button" class="btn btn-default" (click)="submitGroup()">Create Group</button>

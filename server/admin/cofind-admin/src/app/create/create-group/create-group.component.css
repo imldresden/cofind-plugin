@@ -1,0 +1,7 @@
+#submitUser:hover {
+  background-color: #66ff66;
+}
+
+.alert-success, .alert-warning {
+  display: none;
+}

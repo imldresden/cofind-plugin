@@ -1,0 +1,193 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Socket.IO chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font: 13px Helvetica, Arial;
+        }
+
+        form {
+            background: #000;
+            padding: 3px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        form input {
+            border: 0;
+            padding: 10px;
+            width: 90%;
+            margin-right: .5%;
+        }
+
+        form button {
+            width: 9%;
+            background: rgb(130, 224, 255);
+            border: none;
+            padding: 10px;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages li {
+            padding: 5px 10px;
+        }
+
+        #messages li:nth-child(odd) {
+            background: #eee;
+        }
+
+        #messages {
+            margin-bottom: 40px
+        }
+    </style>
+</head>
+
+<body>
+    <ul id="messages"></ul>
+    <form action="">
+        <input id="m" autocomplete="off" />
+        <button>Send</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+
+        // ######################################
+        // START PREPARE TEST DATA
+        // ######################################
+        let requestTabGroup = {
+            session: '5cfe8bfcb694a2446c612973',
+            tabs:
+                [{
+                    number: '1',
+                    url: 'tab1@unit.test',
+                    title: 'Unittests für Dummies'
+                },
+                {
+                    number: '2',
+                    url: 'tab2@unit.test',
+                    title: 'Unittests für Super-Dummies'
+                }]
+        };
+        let requestWebsiteVisit = {
+            group: '5cfe8bfcb694a2446c61297c',
+            user: '5cfe94ccfaff241404260cac',
+            link: 'website@visit.test',
+            title: 'website visit test'
+        }
+        let requestWebsiteProposal = {
+            group: '5cfe94ccfaff241404260cc0',
+            user: '5cfea3a89d386e22d01a4392',
+            link: 'website@visit.test',
+            title: 'website visit test'
+        };
+        let requestNote = {
+            websiteProposal: '5cfeb0321fb22e0dd4c39013',
+            user: '5cfeb1e9b273823f10a33c6f',
+            notePosition:
+            {
+                startElementOffsetOfSameType: 123451,
+                startElementType: 'test-startElementType',
+                startElementInnerOffset: 123452,
+                startElementInnerText: 'test-startElementInnerText',
+                endElementOffsetOfSameType: 123453,
+                endElementType: 'test-endElementType',
+                endElementInnerOffset: 123454,
+                endElementInnerText: 'test-endElementInnerText'
+            },
+            description: 'test-description'
+        };
+        let requestMessage = {
+            group: '5cfeb0311fb22e0dd4c38fef',
+            user: '5cfeb1e9b273823f10a33c6e',
+            message: 'unittest message'
+        };
+        let websiteProposalId = '5cfeb0321fb22e0dd4c39013';
+        let noteId = '5cfeb1e9b273823f10a33c86';
+        let groupId = '5cfe8bfcb694a2446c61297c';
+        // ######################################
+        // END PREPARE TEST DATA
+        // ######################################
+
+        $(function () {
+            let socket = io('http://localhost:3000');
+            //request to join a socket-group for communication
+            socket.emit('join', groupId);
+            socket.on('join', function (groupObject) {
+                console.log(`joined group ${groupId}`);
+            });
+            $('form').submit(function () {
+                socket.emit('chat message', $('#m').val());
+                socket.emit('websitevisit added', wv);
+                $('#m').val('');
+                return false;
+            });
+            socket.on('chat message', function (msg) {
+                $('#messages').append($('<li>').text(msg));
+                window.scrollTo(0, document.body.scrollHeight);
+            });
+
+            // add a tabGroup
+            socket.emit('tabgroup added', groupId, requestTabGroup);
+            // add a websiteVisit
+            socket.emit('websitevisit added', groupId, requestWebsiteVisit);
+            // add a websiteProposal
+            socket.emit('websiteproposal added', groupId, requestWebsiteProposal);
+            // remove a websiteProposal
+            socket.emit('websiteproposal deleted', groupId, websiteProposalId);
+            // add a note
+            socket.emit('note added', groupId, requestNote);
+            // remove a note
+            socket.emit('note deleted', groupId, noteId);
+            // add a message
+            socket.emit('message added', groupId, requestNote);
+
+            // get a extensive group object
+            socket.on('group modified', function (group) {
+                console.log("group modified");
+                console.log(group);
+            });
+
+            // add a websiteVisit
+            // get a extensive group object
+            // socket.emit('websitevisit added', groupId, requestWebsiteVisit);
+            // socket.on('websitevisit added', function (group) {
+            //     console.log("websitevisit added");
+            //     console.log(group);
+            // });
+
+            // add a websiteProposal
+            // get a extensive group object
+            // socket.emit('websiteproposal added', groupId, requestWebsiteProposal);
+            // socket.on('websiteproposal added', function (group) {
+            //     console.log("websiteproposal added");
+            //     console.log(group);
+            // });
+
+            // remove a websiteProposal
+            // get a extensive group object
+            // socket.emit('websiteproposal removed', groupId, requestWebsiteProposal);
+            // socket.on('websiteproposal added', function (group) {
+            //     console.log("websiteproposal added");
+            //     console.log(group);
+            // });
+
+        });
+    </script>
+</body>
+
+</html>

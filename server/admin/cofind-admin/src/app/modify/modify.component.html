@@ -1,0 +1,64 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" [routerLink]="['']">CoFind Administration Panel</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
+          aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" [routerLink]="['']">Home <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [routerLink]="['/reports']">Reports</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [routerLink]="['/create']">Create</a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" [routerLink]="['/modify']">Modify</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+
+<table class="table table-hover table-dark">
+  <thead>
+  <tr>
+    <th scope="col">Nr</th>
+    <th scope="col">Id</th>
+    <th scope="col">Name</th>
+    <th scope="col">Description</th>
+    <th scope="col">Creator</th>
+    <th scope="col">CreatedAt</th>
+    <th scope="col">Revive</th>
+    <th scope="col">Delete</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let group of groups; index as i">
+    <th scope="row">{{i}}</th>
+    <td>{{group._id}}</td>
+    <td>{{group.name}}</td>
+    <td>{{group.description}}</td>
+    <td>{{group.user}}</td>
+    <td>{{group.createdAt}}</td>
+    <td class="download-json">
+      <div class="img-container" *ngIf="group.isDeleted">
+        <img src="./assets/icons/create_white_36x36.png" alt="download" class="icon-button">
+        <img src="./assets/icons/create_white_36x36_g.png" alt="download" class="icon-background"
+             (click)="reviveGroupById(group._id)">
+      </div>
+    </td>
+    <td class="download-json">
+      <div class="img-container" *ngIf="!group.isDeleted">
+        <img src="./assets/icons/delete_white_36x36.png" alt="download" class="icon-button">
+        <img src="./assets/icons/delete_white_36x36_g.png" alt="download" class="icon-background"
+             (click)="deleteGroupById(group._id)">
+      </div>
+    </td>
+  </tr>
+
+  </tbody>
+</table>

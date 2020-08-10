@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: contentCommentBubbles.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: contentCommentBubbles.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * Author: Lucas Vogel
+ * 
+ * This file manages the comment bubbles over every comment
+ */
+
+/**
+ * Append a comment bubble
+ * @param {String} userName Name of the user
+ * @param {String} userID ID of the user
+ * @param {String} comment Comment
+ * @param {String} commentID ID if the comment
+ * @param {Number} top Pixels from the top
+ * @param {Number} left Pixels from the left
+ * @param {Boolean} isCurrentUser optional. If the comment author is the current user
+ */
+function appendReadyCommentBox(userName, userID, comment, commentID, top, left, isCurrentUser = false) {
+    htmlCommentID = "coFindComment-" + commentID;
+    htmlCommentOpenID = "coFindCommentOpen-" + commentID;
+    htmlCommentCloseID = "coFindCommentClose-" + commentID;
+    htmlCommentDeleteID = "coFindCommentDelete-" + commentID;
+    htmlCommentAnchorID = "coFindCommentAnchor-" + commentID;
+    firstLetter = userName.substr(0, 1);
+    var userColor = getNameColor(userID);
+    var toppx = top - 40 + window.scrollY;
+    if (toppx &lt; 0) {
+        toppx = 0;
+    }
+    correctedleft = left;
+    if (window.innerWidth &lt; (left + 300)) {
+        correctedleft = window.innerWidth - 350;
+    }
+    html = `&lt;div id="${htmlCommentID}" data-coFind-comment-id="${commentID}" data-coFind-state="closed" data-coFind-corrected-left="${correctedleft}" data-coFind-left="${left}" class="coFindComment" style="top:${toppx}px;left:${left}px;">
+            &lt;a class="anchor" id="${htmlCommentAnchorID}">&lt;/a>
+            &lt;div id="${htmlCommentOpenID}" data-coFind-corrected-left="${correctedleft}" data-coFind-left="${left}" data-coFind-comment-id="${commentID}" class="coFindCommentUserBubble" style="background-color:${userColor};">
+            ${firstLetter}
+            &lt;/div>
+            &lt;span class="coFindCommentUserName">${userName}&lt;/span>
+            &lt;button id="${htmlCommentCloseID}" class="coFindCommentCloseButton" data-coFind-comment-id="${commentID}" data-coFind-corrected-left="${correctedleft}" data-coFind-left="${left}">X&lt;/button>
+            &lt;p data-coFind-comment-id="${commentID}" class="coFindCommentTextContent">${comment}&lt;/p>`;
+    if (isCurrentUser == true) {
+        html += `&lt;button id="${htmlCommentDeleteID}" class="coFindCommentDeleteButton" data-coFind-id="${commentID}" >Delete&lt;/button>`;
+    }
+    html += `&lt;/div>`;
+    document.body.insertAdjacentHTML("beforeend", html);
+
+    var thisCommentBox = document.getElementById(htmlCommentID);
+    var openClick = document.getElementById(htmlCommentOpenID);
+    openClick.addEventListener("click", openCommentBox);
+    var closeClick = document.getElementById(htmlCommentCloseID);
+    closeClick.addEventListener("click", closeCommentBox);
+    var deleteClick = document.getElementById(htmlCommentDeleteID);
+    if (deleteClick != undefined &amp;&amp; deleteClick != null) {
+        deleteClick.addEventListener("click", deleteCommentButtonAction);
+    }
+}
+
+/**
+ * Open the clicked comment bubble
+ * @param {Event} event Onclick event
+ */
+function openCommentBox(event) {
+    var commentID = event.target.getAttribute("data-coFind-comment-id");
+    thisCommentBox = event.target.parentElement;
+    thisCommentBox.style.width = "300px";
+    thisCommentBox.style.height = "unset";
+    thisCommentBox.style.overflow = "unset";
+    thisCommentBox.style.zIndex = "999999995";
+    thisCommentBox.style.opacity = 1;
+    if (thisCommentBox.hasAttribute("data-coFind-corrected-left")) {
+        thisCommentBox.style.left = thisCommentBox.getAttribute("data-coFind-corrected-left") + "px";
+    }
+    if (thisCommentBox.hasAttribute("data-coFind-state")) {
+        thisCommentBox.setAttribute("data-coFind-state", "open");
+    }
+}
+
+/**
+ * Closing a comment bubble
+ * @param {Event} event onclick event
+ */
+function closeCommentBox(event) {
+    var commentID = event.target.getAttribute("data-coFind-comment-id");
+    thisCommentBox = event.target.parentElement;
+    thisCommentBox.style.width = "39px";
+    thisCommentBox.style.height = "39px";
+    thisCommentBox.style.overflow = "hidden";
+    thisCommentBox.style.zIndex = "999999985";
+    thisCommentBox.style.opacity = 0.8;
+    if (thisCommentBox.hasAttribute("data-coFind-left")) {
+        thisCommentBox.style.left = thisCommentBox.getAttribute("data-coFind-left") + "px";
+    }
+    if (thisCommentBox.hasAttribute("data-coFind-state")) {
+        thisCommentBox.setAttribute("data-coFind-state", "closed");
+    }
+}
+
+/**
+ * Removing a Comment by the delete button in the comment bubble
+ * @param {Event} event onclick event
+ */
+function deleteCommentButtonAction(event) {
+    if (event.target.hasAttribute("data-coFind-id")) {
+        var id = event.target.getAttribute("data-coFind-id");
+        removeComment(id);
+    }
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#aCommentIsOpen">aCommentIsOpen</a></li><li><a href="global.html#addCommentBox">addCommentBox</a></li><li><a href="global.html#addCommentToSiteCommentBox">addCommentToSiteCommentBox</a></li><li><a href="global.html#appendReadyCommentBox">appendReadyCommentBox</a></li><li><a href="global.html#backToStart">backToStart</a></li><li><a href="global.html#checkIfUrlIsAlredyOpen">checkIfUrlIsAlredyOpen</a></li><li><a href="global.html#checkServer">checkServer</a></li><li><a href="global.html#checkServerPersistantData">checkServerPersistantData</a></li><li><a href="global.html#checkStorageChange">checkStorageChange</a></li><li><a href="global.html#closeCommentBox">closeCommentBox</a></li><li><a href="global.html#deleteAccount">deleteAccount</a></li><li><a href="global.html#deleteCommentButtonAction">deleteCommentButtonAction</a></li><li><a href="global.html#deleteGroup">deleteGroup</a></li><li><a href="global.html#deleteIt">deleteIt</a></li><li><a href="global.html#emptyFavoritesBox">emptyFavoritesBox</a></li><li><a href="global.html#emptySidebarContent">emptySidebarContent</a></li><li><a href="global.html#findAndHighlightText">findAndHighlightText</a></li><li><a href="global.html#firstSocketRefresh">firstSocketRefresh</a></li><li><a href="global.html#fullSiteNodeSearch">fullSiteNodeSearch</a></li><li><a href="global.html#generateFavoritesBoxes">generateFavoritesBoxes</a></li><li><a href="global.html#generateSidebarHTML">generateSidebarHTML</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getAllTabs">getAllTabs</a></li><li><a href="global.html#getNameColor">getNameColor</a></li><li><a href="global.html#getNameColorRGB">getNameColorRGB</a></li><li><a href="global.html#getOs">getOs</a></li><li><a href="global.html#getPersistantData">getPersistantData</a></li><li><a href="global.html#GetSelectedText">GetSelectedText</a></li><li><a href="global.html#getSessionID">getSessionID</a></li><li><a href="global.html#gotMessage">gotMessage</a></li><li><a href="global.html#guid">guid</a></li><li><a href="global.html#handleSocketMessage">handleSocketMessage</a></li><li><a href="global.html#handleTabUpdate">handleTabUpdate</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initSiteCommentBox">initSiteCommentBox</a></li><li><a href="global.html#isThisATouchDevice">isThisATouchDevice</a></li><li><a href="global.html#join">join</a></li><li><a href="global.html#joinProject">joinProject</a></li><li><a href="global.html#jump">jump</a></li><li><a href="global.html#leaveGroup">leaveGroup</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#loginBlockIsVisible">loginBlockIsVisible</a></li><li><a href="global.html#loginscanner">loginscanner</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#openCommentBox">openCommentBox</a></li><li><a href="global.html#post">post</a></li><li><a href="global.html#prepareAddNoteAndSend">prepareAddNoteAndSend</a></li><li><a href="global.html#processLoginResult">processLoginResult</a></li><li><a href="global.html#processNotes">processNotes</a></li><li><a href="global.html#processResult">processResult</a></li><li><a href="global.html#put">put</a></li><li><a href="global.html#reDrawAll">reDrawAll</a></li><li><a href="global.html#redrawAllSiteCommentBoxes">redrawAllSiteCommentBoxes</a></li><li><a href="global.html#register">register</a></li><li><a href="global.html#removeAllADDCommentBoxes">removeAllADDCommentBoxes</a></li><li><a href="global.html#removeAllHighlights">removeAllHighlights</a></li><li><a href="global.html#removeComment">removeComment</a></li><li><a href="global.html#removeCommentFromSiteCommentBox">removeCommentFromSiteCommentBox</a></li><li><a href="global.html#resetNotes">resetNotes</a></li><li><a href="global.html#sendMessageToBackend">sendMessageToBackend</a></li><li><a href="global.html#sendMessageToSidebar">sendMessageToSidebar</a></li><li><a href="global.html#sendMessageToTabs">sendMessageToTabs</a></li><li><a href="global.html#sendNewNotesToWebsite">sendNewNotesToWebsite</a></li><li><a href="global.html#sendNewTabs">sendNewTabs</a></li><li><a href="global.html#setBrowserTabUrl">setBrowserTabUrl</a></li><li><a href="global.html#setGroupNameHtml">setGroupNameHtml</a></li><li><a href="global.html#setHub">setHub</a></li><li><a href="global.html#setPersistantData">setPersistantData</a></li><li><a href="global.html#setupSockets">setupSockets</a></li><li><a href="global.html#showAllGroups">showAllGroups</a></li><li><a href="global.html#showComment">showComment</a></li><li><a href="global.html#showPanel">showPanel</a></li><li><a href="global.html#socketsAddWebsiteProposal">socketsAddWebsiteProposal</a></li><li><a href="global.html#socketsDeleteWebsiteProposal">socketsDeleteWebsiteProposal</a></li><li><a href="global.html#socketsLeave">socketsLeave</a></li><li><a href="global.html#startLoginVideoStream">startLoginVideoStream</a></li><li><a href="global.html#startVideoStream">startVideoStream</a></li><li><a href="global.html#stopLoginStream">stopLoginStream</a></li><li><a href="global.html#stopStream">stopStream</a></li><li><a href="global.html#tabClickHelper">tabClickHelper</a></li><li><a href="global.html#tabFavClickHelper">tabFavClickHelper</a></li><li><a href="global.html#tabUnFavClickHelper">tabUnFavClickHelper</a></li><li><a href="global.html#textNodesUnder">textNodesUnder</a></li><li><a href="global.html#updateGroupNameHtml">updateGroupNameHtml</a></li><li><a href="global.html#updateQRCode">updateQRCode</a></li><li><a href="global.html#updateRegisterQRCode">updateRegisterQRCode</a></li><li><a href="global.html#updateSiteCommentNumber">updateSiteCommentNumber</a></li><li><a href="global.html#updateUserNameHtml">updateUserNameHtml</a></li><li><a href="global.html#uuidv4">uuidv4</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Jul 15 2019 16:48:54 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

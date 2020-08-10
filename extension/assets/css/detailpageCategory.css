@@ -1,0 +1,425 @@
+html, body{
+    margin:0px;
+    padding:0px;
+}
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.6em
+}
+
+#buttons{
+  float: right;
+  margin-right: 30px;
+  margin-top: -20px;
+}
+
+#buttons button{
+  height: 30px;
+}
+#buttons button a{
+  text-decoration: none;
+  color: black;
+}
+
+button:disabled{
+  opacity: 0.5;
+}
+
+#favorite{
+    background-color: rgba(193, 193, 193, 0.5);
+    margin-top: -25px;
+    margin-left: 30px;
+    margin-right: 30px;
+    padding:10px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+#activityPage{
+    background-color:  rgba(193, 193, 193, 0.5);
+    margin-top: -25px;
+    margin-left: 30px;
+    margin-right: 30px;
+    padding:10px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+#private{
+    background-color: rgba(135, 155, 195, 0.5);
+    margin-top: -25px;
+    margin-left: 30px;
+    margin-right: 30px;
+    padding:10px;
+
+}
+
+
+.previewFrame{
+  float: left;
+width: 125px;
+height: 100px;
+padding: 5px;
+}
+
+#preview{
+  transform-origin: 0px 0px;/*Platziert es in die linke obere Ecke*/
+  transform: scale(0.125);/*Zoom-Faktor*/
+  width: 1000px;/*Größe vor dem Zoom => Bei Verdoppelung des Zooms, diese Werte halbieren*/
+  height: 800px;
+  cursor: none;
+  pointer-events: none;
+  }
+
+.category{
+  float:left;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding: 10px 10px;
+  width: 100%;
+  background-color: #c1c1c1;
+}
+
+#activityPage .category{
+  float:left;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding: 10px 10px;
+  width: 97%;
+  background-color: #c1c1c1;
+}
+
+.domainCategory{
+  float: left;
+  width: 150px;
+  height: 200px;
+  margin-top: 4px;
+  margin-right: 10px;
+  margin-bottom: 30px;
+  cursor: pointer;
+  padding: 10px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: block;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  border-right: 3px solid grey;
+}
+
+.tabCount{
+  float: left;
+  padding: 4px;
+  margin-left: 0px;
+  margin-top: 0px;
+  background-color: lightgrey;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+#activityPage .tabCount{
+    float: left;
+    padding: 4px;
+    margin-left: 0px;
+    margin-top: 0px;
+    background-color: lightgrey;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+
+.tabs{
+ margin-left: 50px;
+}
+
+.title{
+  font-size: 1.9em;
+  border-bottom: 1px solid grey;
+  height: 1.7em;
+  margin: 30px;
+}
+
+.users{
+  /*float: left;*/
+  margin: 0px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap : wrap;
+  position: relative;
+}
+
+
+
+img{
+    /* display: inline-block; */
+    height: 25px;
+    margin: 5px;
+    vertical-align:middle;
+}
+
+.users img{
+    /* display: inline-block; */
+    height: 20px;
+
+    vertical-align:middle;
+}
+
+p,b{
+    padding-top: 0px;
+    margin-top: 0px;
+
+    margin-bottom: 0px;
+  }
+
+
+.tab{
+    float: left;
+    width: 155px;
+    height: 200px;
+    margin: 10px;
+    cursor: pointer;
+    border: 3px solid navy;
+    padding: 2px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+
+    /*position: relative;*/
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,ffffff+100&1+25,0.76+56 */
+background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 25%,rgba(255,255,255,0.76) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#c2ffffff',GradientType=0 ); /* IE6-9 */
+}
+
+.tab-single{
+    float: left;
+    width: 150px;
+    height: 150px;
+    margin: 3px;
+    cursor: pointer;
+    border: 3px solid navy;
+    padding: 2px;
+    margin: 10px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+
+    /*position: relative;*/
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,ffffff+100&1+25,0.76+56 */
+background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 25%,rgba(255,255,255,0.76) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#c2ffffff',GradientType=0 ); /* IE6-9 */
+}
+
+.users .tab{
+  min-width: 25px;
+  max-width: 25px;
+  height: 25px;
+  cursor: pointer;
+  border: 3px solid navy;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  position: relative;
+/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,ffffff+100&1+25,0.76+56 */
+background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 25%,rgba(255,255,255,0.76) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#c2ffffff',GradientType=0 ); /* IE6-9 */
+
+}
+.tab-single .icon{
+  float:left;
+  width: 35px;
+  height: auto;
+  margin-top: -5px;
+  margin-right: 10px;
+  /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,ffffff+100&1+25,0.76+56 */
+  background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 25%,rgba(255,255,255,0.76) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#c2ffffff',GradientType=0 ); /* IE6-9 */
+
+}
+ .icon{
+  float:left;
+  width: 35px;
+  height: auto;
+  margin-top: 10px;
+  margin-right: 17px;
+  /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#ffffff+0,ffffff+100&1+25,0.76+56 */
+  background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 25%,rgba(255,255,255,0.76) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#c2ffffff',GradientType=0 ); /* IE6-9 */
+}
+
+.users .icon{
+  float:left;
+  width: 30px;
+  margin-top: -3px;
+  margin-right: 0px;
+}
+#urltitle{
+  float:left;
+  width: 100%;
+  text-align: left;
+  margin-left: 5px;
+  /*overflow: scroll;*/
+  white-space: pre-line;
+}
+.sectionDescription{
+  float:left;
+  width: 100%;
+  height: 1.3em;
+}
+.tab-single .urltitle{
+  float:left;
+  width: 57%;
+  text-align: left;
+  margin-left: 0px;
+  margin-bottom: 5px;
+  margin-top: -7px;
+  padding: 5px;
+  /*overflow: scroll;*/
+  white-space: pre-line;
+  border-bottom: 1px solid grey;
+}
+
+.urltitle{
+  float:left;
+  width: 90%;
+  text-align: left;
+  margin-left: 0px;
+  margin-bottom: 5px;
+  padding: 5px;
+  /*overflow: scroll;*/
+  white-space: pre-line;
+  border-bottom: 1px solid grey;
+
+}
+.urltitleActiv{
+  float:left;
+  width: 69%;
+  text-align: left;
+  margin-left: 10px;
+  margin-bottom: 5px;
+  padding: 2px;
+  /*overflow: scroll;*/
+  white-space: pre-line;
+  border-bottom: 1px solid grey;
+}
+.urlFavs{
+  float:left;
+  width: 95%;
+  color: navy;
+  text-align: left;
+  margin-left: 5px;
+  white-space: pre-line;
+
+}
+.url{
+  color: navy;
+  margin-left: 5px;
+}
+
+.usernames{
+  float:left;
+  width: 100%;
+  height: 10px;
+  margin-top: 0px;
+  margin-left: 0px;
+  margin-bottom: 15px;
+
+}
+
+.username{
+  float: left;
+  width: 22px;
+  padding: 4px;
+  margin-right: 2px;
+  margin-left: 2px;
+  margin-top: -2px;
+  background-color: lightgrey;
+  text-overflow: clip;
+  overflow: hidden;
+}
+
+.favored{
+  float:left;
+  padding: 4px;
+  margin-right: -5px;
+  margin-top: -5px;
+  margin-bottom: 6px;
+  background-color: lightgrey;
+  font-style: italic;
+
+}
+
+.activityUser{
+  text-align: left;
+  font-size: 1.3em;
+  width: 100%;
+
+}
+
+#frame {
+    float:left;
+    width: 15vw;
+    height: 10vw;
+    border: none;
+    overflow: hidden;
+}
+
+.notes{
+  width: 95%;
+  position: relative;
+  float:left;
+  display: block;
+  font-style: italic;
+  text-align: left;
+  padding: 4px;
+  white-space: pre-line;
+}
+
+.users #urltitle{
+  width: 75%;
+  text-align: left;
+  padding: 0px;
+  margin: 0px;
+  padding-left: 5px;
+}
+
+.tabFavBox{
+  display: flex;
+  flex-direction: row;
+  flex-wrap : wrap;
+  justify-content: left;
+}
+
+.tabBox{
+  display: flex;
+  flex-direction: row;
+  flex-wrap : wrap;
+  justify-content: left;
+
+}
+
+
+#private #urltitle{
+  width: 77%;
+  float:left;
+  text-align: left;
+  padding-left: 5px;
+  /*overflow: scroll;*/
+  white-space: pre-line;
+}
+
+table, th, td {
+/*  border: 1px solid black;*/
+}
+/*
+@media (min-width: 320px){
+#buttons{
+  display: none;
+}
+}*/
