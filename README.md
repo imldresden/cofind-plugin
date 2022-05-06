@@ -1,3 +1,7 @@
+> **⚠ WARNING:**<br>
+> The code in this project is no longer maintained.
+> Use it with caution and check for vulnerabilities!
+
 # CoFind
 
 CoFind is a reseach oriented browser plugin that allows groups of users to solve web search tasks collaboratively.
